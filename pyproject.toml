@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jiboia_gpu"
+version = "0.1.0"
+description = "jiboia gpu is a python package for automatically normalizing DataFrames and optimizing types efficiently."
+authors = [
+    { name="Lucas Muffato", email="lucasmuffato.eng@gmail.com" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+dependencies = [
+    "cudf-cu12>=25.8"
+]
+
+[project.urls]
+Homepage = "https://github.com/lmuffato/jiboia-gpu"
+Bug_Tracker = "https://github.com/lmuffato/jiboia-gpu/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["jiboia_gpu*"]

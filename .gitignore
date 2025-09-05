@@ -1,0 +1,33 @@
+# Virtual Environments
+/venv
+/.venv
+/env
+/.env
+
+# Python Cache Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution and build files
+/build/
+/dist/
+/*.egg-info/
+/sdist/
+/wheelhouse/
+*.egg
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files
+.pytest_cache/
+.coverage
+
+# Operating system files
+.DS_Store
+Thumbs.db
