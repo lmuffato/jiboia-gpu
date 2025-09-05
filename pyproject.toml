@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jiboia_gpu"
-version = "0.1.0"
+name = "jiboia-gpu"
+version = "0.1.1"
 description = "jiboia gpu is a python package for automatically normalizing DataFrames and optimizing types efficiently."
 authors = [
     { name="Lucas Muffato", email="lucasmuffato.eng@gmail.com" }
