@@ -1,6 +1,6 @@
 import cudf
 from typing import Literal
-from .gpu_analysis_utils import GPUAnalysisUtils
+from .df_utils import DfUtils
 
 
 def print_text_red(text: str) -> str:
@@ -144,13 +144,13 @@ def print_job_create_category_done(
 
 
 
-class GPUNormalizeStringUtils:
+class StringUtils:
     # == CONVERTE TODAS AS COLUNAS EM STRING == #
     @staticmethod
-    def convert_df_to_string(current_df: cudf.DataFrame):
-        for column in current_df.columns:
-            current_df[column] = (
-                current_df[column]
+    def convert_df_to_string(dataframe: cudf.DataFrame):
+        for column in dataframe.columns:
+            dataframe[column] = (
+                dataframe[column]
                     .astype(str)
             )
         print('columns with boolean types have been normalized')
@@ -158,40 +158,41 @@ class GPUNormalizeStringUtils:
 
     # == CRIA CATEGORIAS DE COLUNAS DE STRING, SE FOR POSSÍVEL == #
     @staticmethod
-    def normalize_category(current_df: cudf.DataFrame):
-        for column_name in current_df.columns:
+    def normalize_category(dataframe: cudf.DataFrame):
+        for column_name in dataframe.columns:
             # Verifica se a coluna é do tipo string
-            if not GPUNormalizeStringUtils.is_string(current_df, column_name):
+            if not StringUtils.is_string(dataframe, column_name):
                 continue
             # Verifica se mesmo sendo string, é uma coluna de outro tipo de dados como int, bool, float
-            if not GPUNormalizeStringUtils.is_probably_text(current_df, column_name):
+            if not StringUtils.is_probably_text(dataframe, column_name):
                 continue
-            GPUNormalizeStringUtils.to_category(
-                current_df,
+            StringUtils.to_category(
+                dataframe,
                 column_name
             )
 
 
     # == REMOVE TODOS OS ESPAÇOS DUPLOS, NO COMEÇO E FINAL DE STRING == #
     @staticmethod
-    def normalize_spaces_df(current_df: cudf.DataFrame) -> None:
-        for column_name in current_df.columns:
-            size: int = current_df[column_name].size
+    def normalize_spaces(dataframe: cudf.DataFrame) -> None:
+        print(111)
+        for column_name in dataframe.columns:
+            size: int = dataframe[column_name].size
 
             # Coluna vazia
             if size == 0:
                 continue
 
             # Coluna sem dados
-            if current_df[column_name].notna().sum() == 0:
+            if dataframe[column_name].notna().sum() == 0:
                 continue
 
             # A coluna deve ser do tipo str
-            if current_df[column_name].dtype not in ["object", "string"]:
+            if dataframe[column_name].dtype not in ["object", "string"]:
                 continue
 
-            current_df[column_name] = (
-                current_df[column_name]
+            dataframe[column_name] = (
+                dataframe[column_name]
                 .str.normalize_spaces()
                 .str.strip()
             )
@@ -200,23 +201,31 @@ class GPUNormalizeStringUtils:
 
     # == NORMALIZA TODAS AS STRINGS DO DF == #
     @staticmethod
-    def normalize_str(
-        current_df: cudf.DataFrame,
-        to_case: Literal['lower', 'upper'] | None = None,
+    def normalize(
+        dataframe: cudf.DataFrame,
+        column_name: None|str=None,
+        to_case: None|Literal['lower', 'upper']=None,
         to_ASCII: bool=False,
-    ) -> None:
-        for column_name in current_df.columns:
-            if column_name not in current_df.columns or current_df[column_name].empty:
+        inplace: None|bool=False,
+        log: None|bool=True,
+    ) -> None|cudf.DataFrame:
+        if not inplace:
+            dataframe: cudf.DataFrame = dataframe.copy()
+
+        # if column_name:
+    
+        for column_name in dataframe.columns:
+            if column_name not in dataframe.columns or dataframe[column_name].empty:
                 continue
 
-            if current_df[column_name].dtype not in ["object", "string"]:
+            if dataframe[column_name].dtype not in ["object", "string"]:
                 continue
             
-            if current_df[column_name].isnull().all():
+            if dataframe[column_name].isnull().all():
                 continue
             
             processed_column = (
-                current_df[column_name]
+                dataframe[column_name]
                 .str.normalize_spaces()
                 .str.strip()
             )               
@@ -271,31 +280,37 @@ class GPUNormalizeStringUtils:
                         .str.replace(r"[Ç]", "C", regex=True)
                     )
 
-            current_df[column_name] = processed_column
+            dataframe[column_name] = processed_column
 
-        print_job_normalize_space_done()
-        if to_case or to_ASCII:
+        if log:
+            print_job_normalize_space_done()
+        if log and (to_case or to_ASCII):
             print_job_normalize_string_done(to_case=to_case, to_ASCII=to_ASCII)
+
+        if inplace:
+            return None
+
+        return dataframe
 
 
     @staticmethod
     def to_ascii(
-        current_df: cudf.DataFrame,
+        dataframe: cudf.DataFrame,
         case_type: None|str = None
     ) -> None:
-        for column_name in current_df.columns:
-            size: int = current_df[column_name].size
+        for column_name in dataframe.columns:
+            size: int = dataframe[column_name].size
 
             if size == 0:
                 print("empty column")
                 continue
 
-            if current_df[column_name].dtype not in ["object", "string"]:
+            if dataframe[column_name].dtype not in ["object", "string"]:
                 continue
             
             if not case_type:
-                current_df[column_name] = (
-                    current_df[column_name]
+                dataframe[column_name] = (
+                    dataframe[column_name]
                     .str.replace(r"[áàâãä]", "a", regex=True)
                     .str.replace(r"[ÁÀÂÃÄ]", "A", regex=True)
                     .str.replace(r"[éèêë]", "e", regex=True)
@@ -312,8 +327,8 @@ class GPUNormalizeStringUtils:
                 continue
 
             if case_type == 'lower':
-                current_df[column_name] = (
-                    current_df[column_name]
+                dataframe[column_name] = (
+                    dataframe[column_name]
                     .str.replace(r"[áàâãä]", "a", regex=True)
                     .str.replace(r"[éèêë]", "e", regex=True)
                     .str.replace(r"[íìîï]", "i", regex=True)
@@ -324,8 +339,8 @@ class GPUNormalizeStringUtils:
                 continue
 
             if case_type == 'upper':
-                current_df[column_name] = (
-                    current_df[column_name]
+                dataframe[column_name] = (
+                    dataframe[column_name]
                     .str.replace(r"[ÁÀÂÃÄ]", "A", regex=True)
                     .str.replace(r"[ÉÈÊË]", "E", regex=True)
                     .str.replace(r"[ÍÌÎÏ]", "I", regex=True)
@@ -340,18 +355,18 @@ class GPUNormalizeStringUtils:
 
     @staticmethod
     def to_upercase(
-        current_df: cudf.DataFrame,
+        dataframe: cudf.DataFrame,
     ) -> None:
-        for column_name in current_df.columns:
-            size: int = current_df[column_name].size
+        for column_name in dataframe.columns:
+            size: int = dataframe[column_name].size
 
             if size == 0:
                 continue
 
-            if current_df[column_name].dtype in ["object", "string"]:
+            if dataframe[column_name].dtype in ["object", "string"]:
 
-                current_df[column_name] = (
-                    current_df[column_name]
+                dataframe[column_name] = (
+                    dataframe[column_name]
                     .str.upper()
                 )
                 continue
@@ -361,7 +376,7 @@ class GPUNormalizeStringUtils:
 
     @staticmethod
     def normalize_unique_values_in_column(
-        current_df: cudf.DataFrame, 
+        dataframe: cudf.DataFrame, 
         column_name: str, 
         target_value: str, 
         values_to_replace: list[str]
@@ -370,21 +385,21 @@ class GPUNormalizeStringUtils:
         Substitui valores específicos de uma coluna por um valor alvo.
         
         Parâmetros:
-        - current_df: DataFrame contendo os dados.
+        - dataframe: DataFrame contendo os dados.
         - column: Nome da coluna onde a substituição ocorrerá.
         - target_value: O valor que substituirá os valores encontrados.
         - values_to_replace: Lista de valores que serão substituídos pelo valor alvo.
         '''
-        size: int = current_df[column_name].size
+        size: int = dataframe[column_name].size
         if size == 0:
             print("empty column")
             return
 
-        if current_df[column_name].dtype not in ["object", "string"]:
+        if dataframe[column_name].dtype not in ["object", "string"]:
             return
 
         # Substitui os valores encontrados pela coluna `column` que estão na lista `values_to_replace` com `target_value`
-        current_df[column_name].replace(
+        dataframe[column_name].replace(
             values_to_replace,
             target_value, 
             inplace=True
@@ -393,19 +408,19 @@ class GPUNormalizeStringUtils:
 
     @staticmethod
     def is_category(
-        current_df: cudf.DataFrame,
+        dataframe: cudf.DataFrame,
         column_name: str
     ) -> None:
         # Coluna sem dados
-        if current_df[column_name].notna().sum() == 0:
+        if dataframe[column_name].notna().sum() == 0:
             return False
         
         # A coluna deve ser do tipo str
-        if current_df[column_name].dtype not in ["object", "string"]:
+        if dataframe[column_name].dtype not in ["object", "string"]:
             return False
         
-        unique_values = current_df[column_name].unique()
-        not_na_size = current_df[column_name].notna().size
+        unique_values = dataframe[column_name].unique()
+        not_na_size = dataframe[column_name].notna().size
 
         # Se os valores únicos são mais de 60% das linhas, não vale a pena
         if (round((unique_values.size / not_na_size) * 100) > 60):
@@ -416,53 +431,53 @@ class GPUNormalizeStringUtils:
 
     @staticmethod
     def to_category(
-        current_df: cudf.DataFrame,
+        dataframe: cudf.DataFrame,
         column_name: str
     ) -> None:
         # Coluna sem dados
-        if current_df[column_name].notna().sum() == 0:
+        if dataframe[column_name].notna().sum() == 0:
             return
         
         # A coluna deve ser do tipo str
-        if current_df[column_name].dtype not in ["object", "string"]:
+        if dataframe[column_name].dtype not in ["object", "string"]:
             return
         
-        unique_values = current_df[column_name].unique()
+        unique_values = dataframe[column_name].unique()
 
         unique_values = unique_values.sort_values()
         unique_values = unique_values.reset_index(drop=True)
         
         categorical_dtype = cudf.CategoricalDtype(categories=unique_values, ordered=True)
     
-        current_df[column_name] = current_df[column_name].astype(categorical_dtype)
+        dataframe[column_name] = dataframe[column_name].astype(categorical_dtype)
         print_job_create_category_done(column_name)
 
 
     @staticmethod
     def is_string(
-        current_df: cudf.DataFrame,
+        dataframe: cudf.DataFrame,
         column_name: str
     ) -> None:
-        if current_df[column_name].dtype in ["object", "string"]:
+        if dataframe[column_name].dtype in ["object", "string"]:
             return True
         return False
 
 
     @staticmethod
     def to_categories(
-        current_df: cudf.DataFrame,
+        dataframe: cudf.DataFrame,
         column_names: list[str]
     ) -> None:
         for column_name in column_names:
 
-            if current_df[column_name].notna().sum() == 0:
+            if dataframe[column_name].notna().sum() == 0:
                 continue
             
-            if current_df[column_name].dtype not in ["object", "string"]:
+            if dataframe[column_name].dtype not in ["object", "string"]:
                 continue
 
-            unique_values = current_df[column_name].unique()
-            not_na_size = current_df[column_name].notna().size
+            unique_values = dataframe[column_name].unique()
+            not_na_size = dataframe[column_name].notna().size
 
             # Os dados únicos devem ser pelo menos 60% oi mais do total
             if (round((unique_values.size / not_na_size) * 100) > 60):
@@ -473,13 +488,13 @@ class GPUNormalizeStringUtils:
             
             categorical_dtype = cudf.CategoricalDtype(categories=unique_values, ordered=True)
         
-            current_df[column_name] = current_df[column_name].astype(categorical_dtype)
+            dataframe[column_name] = dataframe[column_name].astype(categorical_dtype)
             print_job_create_category_done(column_name)
 
 
     @staticmethod
     def is_probably_text(
-        current_df: cudf.DataFrame,
+        dataframe: cudf.DataFrame,
         column_name: str
     ) -> bool:
         """
@@ -487,8 +502,8 @@ class GPUNormalizeStringUtils:
         int, float, bool, datetime, timedelta
         """
         has_a_not_string_data = (
-            GPUAnalysisUtils.infer_by_sample(
-                series=current_df[column_name],
+            DfUtils.infer_by_sample(
+                series=dataframe[column_name],
                 regex_patern=MIXED_PATTERN,
                 n_parts=100
                 )
@@ -500,7 +515,7 @@ class GPUNormalizeStringUtils:
 
     @staticmethod
     def normalize_unique_values(
-        current_df: cudf.DataFrame,
+        dataframe: cudf.DataFrame,
         column_name: str,
         mapping_dict: dict[str, list[str]],
         null_values: None|list[str] = []
@@ -509,7 +524,7 @@ class GPUNormalizeStringUtils:
         Normaliza e limpa uma coluna em um cuDF DataFrame de forma inplace.
 
         Args:
-            current_df: O DataFrame a ser modificado.
+            dataframe: O DataFrame a ser modificado.
             column_name: O nome da coluna a ser normalizada.
             mapping_dict: Dicionário no formato {'novo_valor': ['antigo1', 'antigo2']}.
             null_values: Lista opcional de valores a serem convertidos para nulo.
@@ -521,10 +536,10 @@ class GPUNormalizeStringUtils:
         }
 
         # Substitiu os valores para o valor da chave do dict
-        current_df[column_name] = current_df[column_name].replace(replace_map)
+        dataframe[column_name] = dataframe[column_name].replace(replace_map)
 
         # Substitiu os valores nulos
         if null_values:
-            current_df[column_name] = current_df[column_name].replace(
+            dataframe[column_name] = dataframe[column_name].replace(
                 null_values, cudf.NA
             )

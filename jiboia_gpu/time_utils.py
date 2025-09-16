@@ -1,5 +1,6 @@
 import cudf
-from .gpu_analysis_utils import GPUAnalysisUtils
+from .df_utils import DfUtils
+
 
 def print_text_red(text: str) -> str:
     return f"\033[1;31m{text}\033[0m"
@@ -96,7 +97,7 @@ def print_job_create_category_column_done(
     )
 
 
-class GPUNormalizeTimeUtils:
+class TimeUtils:
     @staticmethod
     def combine_regex_patterns(
         pattern_list: list[tuple[str, str, str]]
@@ -120,32 +121,32 @@ class GPUNormalizeTimeUtils:
     @staticmethod
     def normalize_time(current_df: cudf.DataFrame) -> None:
         for column_name in current_df.columns:
-            if GPUNormalizeTimeUtils.is_time(current_df, column_name):
-                GPUNormalizeTimeUtils.convert_hhmm_utc_to_hh_mm_ss(
+            if TimeUtils.is_time(current_df, column_name):
+                TimeUtils.convert_hhmm_utc_to_hh_mm_ss(
                     current_df=current_df,
                     column_name=column_name
                 )
-                GPUNormalizeTimeUtils.convert_hh_mm_to_hh_mm_ss(
+                TimeUtils.convert_hh_mm_to_hh_mm_ss(
                     current_df=current_df,
                     column_name=column_name
                 )
                 print_job_normalize_time_column_done(column_name)
 
-
+    # TODO: COLOCAR OPÇÃO PARA CONTINUAR COMO STRING OU IR PARA TIMEDELTA
     @staticmethod
-    def normalize_timedelta(current_df: cudf.DataFrame) -> None:
+    def normalize(current_df: cudf.DataFrame) -> None:
         for column_name in current_df.columns:
-            # if GPUNormalizeTimeUtils.is_time(current_df, column_name):
-            if GPUAnalysisUtils.infer_by_sample(current_df[column_name], TIME_PATTERN):
-                GPUNormalizeTimeUtils.convert_hhmm_utc_to_hh_mm_ss(
+            # if TimeUtils.is_time(current_df, column_name):
+            if DfUtils.infer_by_sample(current_df[column_name], TIME_PATTERN):
+                TimeUtils.convert_hhmm_utc_to_hh_mm_ss(
                     current_df=current_df,
                     column_name=column_name
                 )
-                GPUNormalizeTimeUtils.convert_hh_mm_to_hh_mm_ss(
+                TimeUtils.convert_hh_mm_to_hh_mm_ss(
                     current_df=current_df,
                     column_name=column_name
                 )
-                GPUNormalizeTimeUtils.to_timedelta_s(
+                TimeUtils.to_timedelta_s(
                     current_df=current_df,
                     column_name=column_name
                 )

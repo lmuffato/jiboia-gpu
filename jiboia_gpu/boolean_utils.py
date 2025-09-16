@@ -62,11 +62,11 @@ def print_job_normalize_bool_done(
         )
 
 
-class GPUNormalizeBooleanUtils:
+class BooleanUtils:
     @staticmethod
     def normalize_bool(current_df: cudf.DataFrame) -> None:
         for column_name in current_df.columns:
-            GPUNormalizeBooleanUtils.convert_column_to_bool(
+            BooleanUtils.convert_column_to_bool(
                 current_df=current_df,
                 column_name=column_name
             )

@@ -1,6 +1,9 @@
-import csv
 import chardet
+import csv
+import cudf
+import os
 from pathlib import Path
+from .df_utils import DfUtils
 
 
 def print_text_red(text: str) -> str:
@@ -13,7 +16,7 @@ def print_text_green(text: str) -> str:
     return f"\033[1;32m{text}\033[0m"
 
 
-class GPUFileAnalysisUtils:
+class CsvUtils:
     @staticmethod
     def get_csv_info(
         file_path: str,
@@ -177,3 +180,48 @@ class GPUFileAnalysisUtils:
                 "converted to",
                 print_text_yellow("utf-8"),
             )
+
+
+    @staticmethod
+    def read_files(
+        folder_path: str,
+        start_part: None|int = 1,
+        end_part: None|int = None
+    ) -> cudf.DataFrame:
+
+        files_csv = sorted(
+            [file for file in os.listdir(folder_path) if file.endswith(".csv")]
+        )
+        
+        # Seleciona os arquivos baseado no indice
+        start_idx = (start_part - 1) if start_part is not None else 0
+        end_idx = end_part if end_part is not None else len(files_csv)
+        
+        selected_files = files_csv[start_idx:end_idx]
+        
+        df_cudf: cudf.DataFrame = cudf.DataFrame()
+        
+        for file_name in selected_files:
+            file_path: str = f'{folder_path}{file_name}'
+            
+            csv_info: dict[str, any] = CsvUtils.get_csv_info(
+                file_path=file_path
+            )
+        
+            sep_delimiter: str = csv_info["delimiter"]  
+            
+            if DfUtils.is_vram_use_limit():
+                break
+        
+            df_cudf_part = cudf.read_csv(
+                filepath_or_buffer=file_path,
+                sep=sep_delimiter,
+                dtype=str,
+            )
+        
+            df_cudf = cudf.concat([df_cudf, df_cudf_part], ignore_index=True)
+            
+            DfUtils.cudf_size_info(df_cudf, print_info=True)
+            del df_cudf_part
+        
+        return df_cudf

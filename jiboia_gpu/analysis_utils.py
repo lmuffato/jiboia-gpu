@@ -31,7 +31,7 @@ def print_job_drop_column_done(
     )
 
 
-class GPUAnalysisUtils:
+class AnalysisUtils:
     @staticmethod
     def drop_columns(
         current_df: cudf.DataFrame,
@@ -270,5 +270,30 @@ class GPUAnalysisUtils:
 
         if (samples.str.contains(regex_patern).sum() == samples.notna().sum()):
             return True
+
+        return False
+
+
+    @staticmethod
+    def any_pattern(
+        series: cudf.Series,
+        pattern: str,
+        chunk_size: int=500_000
+    ) -> int:
+        """
+        Retorna true no primeiro padrão encontrado.
+        Usa chunk para não estourar a memória em series grandes.
+        """
+
+        total_rows: int = len(series)
+
+        for start_index in range(0, total_rows, chunk_size):
+            end_index: int = min(start_index + chunk_size, total_rows)
+            chunk: cudf.Series = series.iloc[start_index:end_index]
+            
+            mask: cudf.Series = chunk.str.match(pattern)
+
+            if mask.any():
+                return True
 
         return False

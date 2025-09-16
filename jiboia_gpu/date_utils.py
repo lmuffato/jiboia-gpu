@@ -1,6 +1,6 @@
 import cudf
 import cupy as cp
-from .gpu_analysis_utils import GPUAnalysisUtils
+from .df_utils import DfUtils
 
 def print_text_red(text: str) -> str:
     return f"\033[1;31m{text}\033[0m"
@@ -68,36 +68,36 @@ DATE_PATTERN = (
 )
 
 
-class GPUNormalizeDateUtils:
+class DateUtils:
     @staticmethod
     def normalize_date(current_df: cudf.DataFrame) -> None:
         for column_name in current_df.columns:
-            # if GPUNormalizeDateUtils.is_date(
+            # if DateUtils.is_date(
             #     current_df,
             #     column_name
             # ):
-            if GPUAnalysisUtils.infer_by_sample(
+            if DfUtils.infer_by_sample(
                 series=current_df[column_name],
                 regex_patern=DATE_PATTERN
             ):
-                GPUNormalizeDateUtils.to_date_iso(
+                DateUtils.to_date_iso(
                     current_df=current_df,
                     column_name=column_name
                 )
                 print_job_normalize_date_column_done(column_name)
 
     @staticmethod
-    def normalize_datetime(current_df: cudf.DataFrame) -> None:
+    def normalize(current_df: cudf.DataFrame) -> None:
         for column_name in current_df.columns:
-            # if GPUNormalizeDateUtils.is_date(
+            # if DateUtils.is_date(
             #     current_df,
             #     column_name
             # ):
-            if GPUAnalysisUtils.infer_by_sample(
+            if DfUtils.infer_by_sample(
                 series=current_df[column_name],
                 regex_patern=DATE_PATTERN
             ):
-                GPUNormalizeDateUtils.to_datetime(
+                DateUtils.to_datetime(
                     current_df=current_df,
                     column_name=column_name
                 )

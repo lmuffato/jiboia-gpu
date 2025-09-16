@@ -44,7 +44,7 @@ def print_job_create_category_column_done(
     )
 
 
-class GPUNormalizeDateTimeUtils:
+class DateTimeUtils:
     @staticmethod
     def create_day_week_column(
         current_df: cudf.DataFrame,
@@ -331,7 +331,7 @@ class GPUNormalizeDateTimeUtils:
 
 
     @staticmethod
-    def create_datetime_column_from_date_and_time(
+    def combine_date_time(
         current_df: cudf.DataFrame,
         date_column_name: str,
         time_column_name: str,

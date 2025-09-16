@@ -131,15 +131,15 @@ RAW_INVALID_LOWERRCASE_VALUES: list[str] = [
 ]
 
 
-# # class GPUNormalizeNullUtils:
+# # class NullUtils:
 #     """
 #     Classe otimizada para normalizar valores nulos em colunas de um cudf.DataFrame
 #     utilizando operações 100% na GPU.
 #     """
 
-class GPUNormalizeNullUtils:
+class NullUtils:
     @staticmethod
-    def normalize_na(
+    def normalize(
         current_df: cudf.DataFrame,
         additional_null_values: list[str] = [],
         # case_type: Literal['low', 'upper'] | None = None,
@@ -147,7 +147,7 @@ class GPUNormalizeNullUtils:
         # current_df = current_df.fillna(cudf.NA)
 
         for column_name in current_df.columns:
-            GPUNormalizeNullUtils.normalize_na_column(
+            NullUtils.normalize_na_column(
                 current_df=current_df,
                 column_name=column_name,
                 additional_null_values=additional_null_values,
@@ -184,17 +184,17 @@ class GPUNormalizeNullUtils:
         if case_type == 'low':
             values_to_replace = cudf.concat(
                 [
-                    GPUNormalizeNullUtils._GPU_RAW,
-                    GPUNormalizeNullUtils._GPU_LOWER]
+                    NullUtils._GPU_RAW,
+                    NullUtils._GPU_LOWER]
                 )
         elif case_type == 'upper':
             values_to_replace = cudf.concat(
                 [
-                    GPUNormalizeNullUtils._GPU_RAW,
-                    GPUNormalizeNullUtils._GPU_UPPER]
+                    NullUtils._GPU_RAW,
+                    NullUtils._GPU_UPPER]
             )
         else:
-            values_to_replace = GPUNormalizeNullUtils._GPU_ALL
+            values_to_replace = NullUtils._GPU_ALL
 
         if additional_null_values:
             gpu_additional = cudf.Series(additional_null_values)

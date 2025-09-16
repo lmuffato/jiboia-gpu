@@ -12,6 +12,19 @@ def print_text_yellow(text: str) -> str:
 def print_text_green(text: str) -> str:
     return f"\033[1;32m{text}\033[0m"
 
+def print_log(
+    column_name: str,
+    column_type: str,
+    show_log: None|bool=True
+) -> None:
+    if show_log:
+        print(
+            print_text_green("Done!"),
+            "column",
+            print_text_yellow(column_name),
+            "converted to",
+            print_text_yellow(column_type)
+        )
 
 def print_job_drop_column_done(
     columns_to_delete: list[str]
@@ -31,7 +44,7 @@ def print_job_drop_column_done(
     )
 
 
-class GPUAnalysisUtils:
+class DfUtils:
     @staticmethod
     def drop_columns(
         current_df: cudf.DataFrame,

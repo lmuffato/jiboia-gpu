@@ -1,3 +1,16 @@
+CUDF_SUPORTED_DTYPES: dict[str, list[str]] = {
+    "str": ["object","string"],
+    "int": ["int8", "int16", "int32", "int64"],
+    "uint": ["uint32", "uint64"],
+    "float": ["float32", "float64"],
+    "datetime": ["datetime64[s]", "datetime64[ms]", "datetime64[us]", "datetime64[ns]"],
+    "timedelta": ["timedelta[s]", "timedelta[ms]", "timedelta[us]", "timedelta[ns]"],
+    "category": ["CategoricalDtype"],
+    "decimal": ["Decimal32Dtype", "Decimal64Dtype", "Decimal128Dtype"],
+    "struct": ["StructDtype"]
+}
+
+
 DATE_REGEX_PATTERNS: list[tuple] = [
     # Formatos com barra
     (r'^\d{2}/\d{2}/\d{4}$', '%d/%m/%Y'),      # 01/02/2024

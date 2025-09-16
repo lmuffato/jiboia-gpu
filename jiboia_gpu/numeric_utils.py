@@ -1,6 +1,6 @@
 import cudf
 import cupy as cp
-from .gpu_analysis_utils import GPUAnalysisUtils
+from .df_utils import DfUtils
 
 
 SIGNED_INTEGER_TYPES: tuple[str] = (
@@ -89,23 +89,23 @@ def print_job_normalize_numeric_done(
         )
 
 
-class GPUNormalizeNumericUtils:
+class NumericUtils:
     @staticmethod
-    def normalize_number(
+    def normalize(
         current_df: cudf.DataFrame,
     ) -> bool:
         for column_name in current_df.columns:
             # Verifica se é um número por amostragem
-            if GPUAnalysisUtils.infer_by_sample(
+            if DfUtils.infer_by_sample(
                 series=current_df[column_name],
                 regex_patern=NUMERIC_PATTERN,
                 n_parts=100
             ):
-                GPUNormalizeNumericUtils.normalize_number_format(
+                NumericUtils.normalize_number_format(
                     current_df=current_df,
                     column_name=column_name,
                 )
-                GPUNormalizeNumericUtils.convert_column_to_mumber(
+                NumericUtils.convert_column_to_mumber(
                     current_df=current_df,
                     column_name=column_name,
                 )
