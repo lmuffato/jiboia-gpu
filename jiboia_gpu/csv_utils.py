@@ -1,19 +1,10 @@
+from .dataframe.df_utils import DfUtils
+from .log_utils import print_text_green, print_text_yellow, print_warning_encode_file_log
+from pathlib import Path
 import chardet
 import csv
 import cudf
 import os
-from pathlib import Path
-from .df_utils import DfUtils
-
-
-def print_text_red(text: str) -> str:
-    return f"\033[1;31m{text}\033[0m"
-
-def print_text_yellow(text: str) -> str:
-    return f"\033[1;33m{text}\033[0m"
-
-def print_text_green(text: str) -> str:
-    return f"\033[1;32m{text}\033[0m"
 
 
 class CsvUtils:
@@ -115,10 +106,6 @@ class CsvUtils:
         return str(output_path)
 
 
-    import chardet
-    from pathlib import Path
-
-
     @staticmethod
     def convert_all_csvs_to_utf8(folder_path: str, new_folder: bool = False) -> None:
         """
@@ -186,7 +173,9 @@ class CsvUtils:
     def read_files(
         folder_path: str,
         start_part: None|int = 1,
-        end_part: None|int = None
+        end_part: None|int = None,
+        sep_delimiter: None|str=None,
+        skip_rows: int = 0
     ) -> cudf.DataFrame:
 
         files_csv = sorted(
@@ -207,21 +196,32 @@ class CsvUtils:
             csv_info: dict[str, any] = CsvUtils.get_csv_info(
                 file_path=file_path
             )
-        
-            sep_delimiter: str = csv_info["delimiter"]  
+
+            if csv_info["encoding"] != "utf-8":
+                print_warning_encode_file_log(
+                    file_name=file_name,
+                    encode=csv_info["encoding"],
+                    show_log=True
+                )
+
+            if not sep_delimiter:
+                sep: str = csv_info["delimiter"]
+            else:
+                sep: str = sep_delimiter
             
             if DfUtils.is_vram_use_limit():
                 break
-        
+
             df_cudf_part = cudf.read_csv(
                 filepath_or_buffer=file_path,
-                sep=sep_delimiter,
+                sep=sep,
                 dtype=str,
+                skiprows=skip_rows
             )
         
             df_cudf = cudf.concat([df_cudf, df_cudf_part], ignore_index=True)
             
             DfUtils.cudf_size_info(df_cudf, print_info=True)
             del df_cudf_part
-        
+
         return df_cudf

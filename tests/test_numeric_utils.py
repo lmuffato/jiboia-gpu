@@ -366,7 +366,7 @@ def test_normalize_convert_mixed_with_letters_to_float32() -> None:
     NumericUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
-        numeric_threshold=50,       # Pelo menos, 50% das linhas precisa ser um número válido
+        match_min_rate=50,       # Pelo menos, 50% das linhas precisa ser um número válido
         inplace=True,
         show_log=False
     )
@@ -390,7 +390,7 @@ def test_normalize_do_not_convert_when_string_mix_is_greater_than_numeric_thresh
     NumericUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
-        numeric_threshold=75,       # Pelo menos, 75% das linhas precisa ser um número válido
+        match_min_rate=90,       # Pelo menos, 90% das linhas precisa ser um número válido
         inplace=True,
         show_log=False
     )

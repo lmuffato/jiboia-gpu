@@ -61,6 +61,11 @@ RAW_INVALID_VALUES: list[str] = [
 ]
 
 RAW_INVALID_UPPERCASE_VALUES: list[str] = ['',
+'',
+    ' ',
+    '-',
+    '--',
+    '?',
  'NA',
  '<NA>',
  '(NA)',

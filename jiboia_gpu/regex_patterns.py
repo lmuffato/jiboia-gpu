@@ -10,6 +10,11 @@ CUDF_SUPORTED_DTYPES: dict[str, list[str]] = {
     "struct": ["StructDtype"]
 }
 
+numeric_types: list[str] = sum(
+    (CUDF_SUPORTED_DTYPES[key] for key in ["int", "uint", "float", "decimal"]),
+    start=[]
+)
+
 
 DATE_REGEX_PATTERNS: list[tuple] = [
     # Formatos com barra

@@ -1,0 +1,22 @@
+RAW_INVALID_LOWERCASE_VALUES: list[str] = [
+    '',
+    '',
+    ' ',
+    '-',
+    '--',
+    '?',
+    'na',
+    '<na>',
+    '(na)',
+    'n/a',
+    'nan',
+    'nat',
+    'null',
+    '(null)',
+    'none',
+    'nan',
+    'undefined',
+    'none',
+    'n.d',
+    'n.a'
+]

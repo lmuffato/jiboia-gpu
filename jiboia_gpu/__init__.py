@@ -1,22 +1,28 @@
-from .string_utils import StringUtils
-from .null_utils import NullUtils
-from .df_utils import DfUtils
-from .date_utils import DateUtils
-from .time_utils import TimeUtils
-from .datetime_utils import DateTimeUtils
-from .boolean_utils import BooleanUtils
-from .numeric.numeric_utils import NumericUtils
-from .csv_utils import CsvUtils
 
+from .boolean.boolean_utils import BooleanUtils
+from .csv_utils import CsvUtils
+from .chunk_utils import chunk_df, chunk_iterate, chunk_iterate_index
+from .dataframe.df_utils import DfUtils
+from .datetime.datetime_utils import DateTimeUtils
+from .null.null_utils import NullUtils
+from .numeric.numeric_utils import NumericUtils
+from .string.string_utils import StringUtils
+from .time.time_utils import TimeUtils
+from .utils import combine_regex
 from functools import wraps
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 import inspect
 
 
 class JiboiaGPUConfig:
     def __init__(self) -> None:
         self.inplace: bool = False
-        self.show_log: bool = False
+        self.show_log: bool = True
+        self.chunk_size: int = 500_000
+        self.match_min_rate: int = 0
+        self.null_values: list[str] = [],
+        self.to_case: None|Literal['lower', 'upper']=None,
+        self.to_ASCII: bool=False,
 
 
 config = JiboiaGPUConfig()
@@ -46,20 +52,43 @@ class _Namespace:
 
 
 class JiboiaGPU:
-    str = _Namespace(StringUtils)
-    num = _Namespace(NumericUtils)
-    null = _Namespace(NullUtils)
-    date = _Namespace(DateUtils)
-    time = _Namespace(TimeUtils)
-    datetime = _Namespace(DateTimeUtils)
     bool = _Namespace(BooleanUtils)
+    datetime = _Namespace(DateTimeUtils)
     df = _Namespace(DfUtils)
     csv = _Namespace(CsvUtils)
+    num = _Namespace(NumericUtils)
+    null = _Namespace(NullUtils)
+    str = _Namespace(StringUtils)
+    time = _Namespace(TimeUtils)
+
 
     @staticmethod
-    def config(*, inplace: bool=False, show_log: bool=True) -> None:     
+    def config(
+        *,
+        inplace: bool=False,
+        show_log: bool=True,
+        chunk_size: int = 500_000,
+        match_min_rate: int = 0,
+        null_values: list[str] = [],
+        to_case: None|Literal['lower', 'upper']=None,
+        to_ASCII: bool=False
+    ) -> None:     
         config.inplace = inplace
         config.show_log = show_log
+        config.chunk_size = chunk_size
+        config.match_min_rate = match_min_rate
+        config.null_values = null_values
+        config.to_case = to_case
+        config.to_ASCII = to_ASCII
+
+
+    @staticmethod
+    def reset_config() -> None:
+        """
+        Reseta as configurações da JiboiaGPU para os valores padrão
+        """
+        global config
+        config = JiboiaGPUConfig()
 
 jiboia_gpu = JiboiaGPU()
 

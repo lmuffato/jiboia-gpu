@@ -15,7 +15,7 @@ def print_text_green(text: str) -> str:
 def print_log(
     column_name: str,
     column_type: str,
-    show_log: None|bool=True
+    show_log: bool=True
 ) -> None:
     if show_log:
         print(
@@ -116,7 +116,7 @@ class DfUtils:
     
 
     @staticmethod
-    def pandasdf_size_info(current_df: pd.DataFrame, print_info: bool = False) -> None:
+    def df_size_info(current_df: pd.DataFrame, print_info: bool = False) -> None:
         rows: int = current_df.shape[0]
         columns: int =  current_df.shape[1]
         ram_size_mb: float = round(current_df.memory_usage(index=True, deep=True).sum() / (1024 * 1024), 2)
@@ -140,122 +140,179 @@ class DfUtils:
                 
         return df_info
     
+# import cudf
+# import functools
+# from typing import Callable
 
-    @staticmethod
-    def get_index_samples(
-        series: cudf.Series,
-        n_parts: int = 10,
-        n_samples: int = 10
-    ) -> list[int]:
-        """
-        Verifica de forma performática na GPU se algum valor nas amostras de uma Series
-        corresponde a um padrão de data.
 
-        Args:
-            s (cudf.Series): A Series de strings que será analisada.
-            n_parts (int): O número de partes em que a Series será dividida para amostragem.
-            n_samples (int): O número de amostras a serem coletadas de cada parte.
+# def chunk_df(chunk_size: int = 500_000):
+#     """
+#     Decorador para processar um DataFrame em chunks.
+#     Modifica inlplace
+    
+#     Divide o dataframe em pedaços e aplica a função decorada a cada um, otimizando o 
+#     processamento de grandes DataFrames, dividindo-os em
+#     pedaços menores e aplicando a função decorada a cada um.
 
-        Returns:
-            bool: True se um padrão de data for encontrado nas amostras, False caso contrário.
-        """
+#     Modo de usar:
+#     1. Como decorador, na declaração da função:
+#        @chunk_df(chunk_size=100_000)
+#        def funcao(dataframe: cudf.DataFrame, ...):
+#            # Lógica da função, que será aplicada a cada chunk
+#            ...
+#            return dataframe
 
-        series_size = len(series)
+#     2. Na chamada de uma função já declarada:
+#        def funcao(dataframe: cudf.DataFrame, ...):
+#            # Lógica da função
+#            ...
+#            return dataframe
 
-        # print(series.name)
-        # return
+#        funcao_decorada = chunk_df(chunk_size=100_000)(funcao)
+#        funcao_decorada(df, ...)
 
-        if ((n_parts * n_samples) >= series_size):
-            raise ValueError("The total number of samples requested exceeds or equals the series size. Please provide a smaller value for n_parts or n_samples.")
+#     Parâmetros:
+#     - chunk_size (int): O tamanho de cada pedaço de DataFrame a ser processado.
+#     """
+#     def decorator(func: Callable):
+#         @functools.wraps(func)
+#         def wrapper(dataframe: cudf.DataFrame, column_name: str, *args, **kwargs):
+#             if len(dataframe) <= chunk_size:
+#                 return func(dataframe, column_name, *args, **kwargs)
+
+#             final_dtype: str = None
+
+#             for start in range(0, len(dataframe), chunk_size):
+#                 end = min(start + chunk_size, len(dataframe))
+#                 chunk = dataframe.iloc[start:end]
+
+#                 processed_chunk = func(chunk, column_name, *args, **kwargs)
+
+#                 if final_dtype is None:
+#                     final_dtype = processed_chunk[column_name].dtype
+
+#                 dataframe.iloc[start:end] = processed_chunk
+#             dataframe[column_name] = dataframe[column_name].astype(final_dtype)
+#             return dataframe
+#         return wrapper
+#     return decorator
+
+
+    # @staticmethod
+    # def get_index_samples(
+    #     series: cudf.Series,
+    #     n_parts: int = 10,
+    #     n_samples: int = 10
+    # ) -> list[int]:
+    #     """
+    #     Verifica de forma performática na GPU se algum valor nas amostras de uma Series
+    #     corresponde a um padrão de data.
+
+    #     Args:
+    #         s (cudf.Series): A Series de strings que será analisada.
+    #         n_parts (int): O número de partes em que a Series será dividida para amostragem.
+    #         n_samples (int): O número de amostras a serem coletadas de cada parte.
+
+    #     Returns:
+    #         bool: True se um padrão de data for encontrado nas amostras, False caso contrário.
+    #     """
+
+    #     series_size = len(series)
+
+    #     # print(series.name)
+    #     # return
+
+    #     if ((n_parts * n_samples) >= series_size):
+    #         raise ValueError("The total number of samples requested exceeds or equals the series size. Please provide a smaller value for n_parts or n_samples.")
         
-        if (series_size // n_parts == 0):
-            raise ValueError("The number of parts is greater than the series size. Please provide a smaller value for n_parts.")
+    #     if (series_size // n_parts == 0):
+    #         raise ValueError("The number of parts is greater than the series size. Please provide a smaller value for n_parts.")
 
-        # Gera todos os índices de amostragem DE UMA VEZ na GPU
-        step_pass = series_size // n_parts
+    #     # Gera todos os índices de amostragem DE UMA VEZ na GPU
+    #     step_pass = series_size // n_parts
         
-        # Índices iniciais de cada bloco (ex: 0, 1000, 2000, ...)
-        start_indices = cp.arange(n_parts) * step_pass
+    #     # Índices iniciais de cada bloco (ex: 0, 1000, 2000, ...)
+    #     start_indices = cp.arange(n_parts) * step_pass
         
-        # Offsets dentro de cada bloco (ex: 0, 1, 2, ... n_samples-1)
-        sample_offsets = cp.arange(n_samples)
+    #     # Offsets dentro de cada bloco (ex: 0, 1, 2, ... n_samples-1)
+    #     sample_offsets = cp.arange(n_samples)
 
-        all_indices = (start_indices[:, None] + sample_offsets).flatten()
+    #     all_indices = (start_indices[:, None] + sample_offsets).flatten()
         
-        # Garante que os índices não ultrapassem o tamanho da Series
-        all_indices = all_indices[all_indices < series_size]
+    #     # Garante que os índices não ultrapassem o tamanho da Series
+    #     all_indices = all_indices[all_indices < series_size]
 
-        return all_indices
+    #     return all_indices
     
 
-    @staticmethod
-    def infer_by_sample(
-        series: cudf.Series,
-        regex_patern: str,
-        n_parts: int = 10,
-        n_samples: int = 10,
-        ignore_erros: None|bool = False
-    ) -> bool:
-        """
-        Verifica de forma performática na GPU se algum valor nas amostras de uma Series
-        corresponde a um padrão de data.
+    # @staticmethod
+    # def infer_by_sample(
+    #     series: cudf.Series,
+    #     regex_patern: str,
+    #     n_parts: int = 10,
+    #     n_samples: int = 10,
+    #     ignore_erros: None|bool = False
+    # ) -> bool:
+    #     """
+    #     Verifica de forma performática na GPU se algum valor nas amostras de uma Series
+    #     corresponde a um padrão de data.
 
-        Args:
-            s (cudf.Series): A Series de strings que será analisada.
-            n_parts (int): O número de partes em que a Series será dividida para amostragem.
-            n_samples (int): O número de amostras a serem coletadas de cada parte.
+    #     Args:
+    #         s (cudf.Series): A Series de strings que será analisada.
+    #         n_parts (int): O número de partes em que a Series será dividida para amostragem.
+    #         n_samples (int): O número de amostras a serem coletadas de cada parte.
 
-        Returns:
-            bool: True se um padrão de data for encontrado nas amostras, False caso contrário.
-        """
+    #     Returns:
+    #         bool: True se um padrão de data for encontrado nas amostras, False caso contrário.
+    #     """
 
-        series_size = len(series)
+    #     series_size = len(series)
 
-        # Coluna vazia
-        if series_size == 0:
-            return False
+    #     # Coluna vazia
+    #     if series_size == 0:
+    #         return False
         
-        # Coluna sem dados
-        if series.notna().sum() == 0:
-            return False
+    #     # Coluna sem dados
+    #     if series.notna().sum() == 0:
+    #         return False
 
-        # A coluna deve ser do tipo str
-        if str(series.dtype) not in ["object", "string"]:
-            return False
+    #     # A coluna deve ser do tipo str
+    #     if str(series.dtype) not in ["object", "string"]:
+    #         return False
         
-        too_many_samples = ((n_parts * n_samples) >= series_size)
-        too_many_parts = (series_size // n_parts == 0)
+    #     too_many_samples = ((n_parts * n_samples) >= series_size)
+    #     too_many_parts = (series_size // n_parts == 0)
 
-        if (ignore_erros and (too_many_samples or too_many_parts)):
-            return (series.str.contains(regex_patern).sum() == series.notna().sum())
+    #     if (ignore_erros and (too_many_samples or too_many_parts)):
+    #         return (series.str.contains(regex_patern).sum() == series.notna().sum())
 
-        if (too_many_samples):
-            raise ValueError("The total number of samples requested exceeds or equals the series size. Please provide a smaller value for n_parts or n_samples.")
+    #     if (too_many_samples):
+    #         raise ValueError("The total number of samples requested exceeds or equals the series size. Please provide a smaller value for n_parts or n_samples.")
 
-        if (too_many_parts):
-            raise ValueError("The number of parts is greater than the series size. Please provide a smaller value for n_parts.")
+    #     if (too_many_parts):
+    #         raise ValueError("The number of parts is greater than the series size. Please provide a smaller value for n_parts.")
 
-        # Gera todos os índices de amostragem DE UMA VEZ na GPU
-        step_pass = series_size // n_parts
+    #     # Gera todos os índices de amostragem DE UMA VEZ na GPU
+    #     step_pass = series_size // n_parts
         
-        # Índices iniciais de cada bloco (ex: 0, 1000, 2000, ...)
-        start_indices = cp.arange(n_parts) * step_pass
+    #     # Índices iniciais de cada bloco (ex: 0, 1000, 2000, ...)
+    #     start_indices = cp.arange(n_parts) * step_pass
         
-        # Offsets dentro de cada bloco (ex: 0, 1, 2, ... n_samples-1)
-        sample_offsets = cp.arange(n_samples)
+    #     # Offsets dentro de cada bloco (ex: 0, 1, 2, ... n_samples-1)
+    #     sample_offsets = cp.arange(n_samples)
 
-        all_indices = (start_indices[:, None] + sample_offsets).flatten()
+    #     all_indices = (start_indices[:, None] + sample_offsets).flatten()
         
-        # Garante que os índices não ultrapassem o tamanho da Series
-        all_indices = all_indices[all_indices < series_size]
+    #     # Garante que os índices não ultrapassem o tamanho da Series
+    #     all_indices = all_indices[all_indices < series_size]
 
-        # 3. Seleção de todas as amostras em uma única operação
-        samples = series.iloc[all_indices]
+    #     # 3. Seleção de todas as amostras em uma única operação
+    #     samples = series.iloc[all_indices]
 
-        if (samples.str.contains(regex_patern).sum() == samples.notna().sum()):
-            return True
+    #     if (samples.str.contains(regex_patern).sum() == samples.notna().sum()):
+    #         return True
 
-        return False
+    #     return False
 
 
     # def print_converted_column_type(

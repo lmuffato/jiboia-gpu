@@ -1,6 +1,10 @@
-from ..analysis_utils import AnalysisUtils
-from ..df_utils import (
-    print_log
+from ..log_utils import print_log
+from ..string.string_utils import StringUtils
+from ..utils import combine_regex, is_valid_to_normalize, CudfSupportedDtypes
+from .regex_pattern import (
+    regex_pattern_bad_formatted_number,
+    regex_pattern_valid_number,
+    regex_pattern_list
 )
 import cudf
 import cupy as cp
@@ -12,10 +16,10 @@ class NumericUtils:
     def normalize(
         dataframe: cudf.DataFrame,
         column_name: str,
-        numeric_threshold: None|int=50,
+        match_min_rate: None|int=50,
         inplace: None|bool=False,
         show_log: None|bool=True
-    ) -> cudf.DataFrame|None:
+    ) -> bool|cudf.DataFrame:
         """
         Converte uma coluna de um DataFrame cuDF para o tipo numérico mais apropriado.
 
@@ -26,7 +30,7 @@ class NumericUtils:
         Args:
             df: O DataFrame cuDF a ser modificado.
             column_name: O nome da coluna a ser normalizada.
-            numeric_threshold:
+            match_min_rate:
                 A proporção mínima de valores não nulos que devem ser inteiro de 0 a 100
                 numéricos para que uma coluna de string seja convertida (padrão: 0.7).
             inplace: Se True, modifica o DataFrame original. Se False, retorna uma cópia.
@@ -35,25 +39,48 @@ class NumericUtils:
         Returns:
             O DataFrame modificado se inplace=False, senão None.
         """
+        valid_types: list[str] = CudfSupportedDtypes.str_types + CudfSupportedDtypes.numeric_types
+        
+        is_valid: bool = is_valid_to_normalize(
+            series=dataframe[column_name],
+            valid_types=valid_types
+        )
+        
+        if not is_valid:
+            return False
+        
+        is_number: bool = NumericUtils.is_number(
+            series=dataframe[column_name],
+            match_min_rate=match_min_rate
+        )
+
+        if not is_number:
+            return False
+
         if not inplace:
             dataframe: cudf.DataFrame = dataframe.copy()
 
         original_dtype: cp.dtypes = dataframe[column_name].dtype
 
-        if original_dtype in ("object", "string"):
-            NumericUtils.fix_decimal(dataframe, column_name, inplace=True)
+        if original_dtype in CudfSupportedDtypes.str_types:
+            NumericUtils.fix_decimal(
+                dataframe=dataframe,
+                column_name=column_name,
+                inplace=True
+            )
 
         col: cudf.Series = dataframe[column_name]
 
-        if original_dtype in ("object", "string"):
-            # numeric_col: cudf.Series = cudf.to_numeric(col, errors="coerce")
+        if original_dtype in CudfSupportedDtypes.str_types and match_min_rate == 0:
+            col: cudf.Series = cudf.to_numeric(col, errors="coerce")
+
+        if original_dtype in CudfSupportedDtypes.str_types:
             numeric_col: cudf.Series = cudf.to_numeric(col, errors="coerce")
-            
             non_null_before: int = col.notna().sum()      
             non_null_after: int = numeric_col.notna().sum()
-            
-            if (round((non_null_after / non_null_before)*100) <= numeric_threshold):
-                return dataframe if not inplace else None
+
+            if not (round((non_null_after / non_null_before)*100) >= match_min_rate):
+                return False
 
             col: cudf.Series = numeric_col
 
@@ -80,6 +107,8 @@ class NumericUtils:
         if not inplace:
             return dataframe
 
+        return True
+
 
     @staticmethod
     def fix_decimal(
@@ -87,7 +116,7 @@ class NumericUtils:
         column_name: str,
         chunk_size: None|int = 500_000,
         inplace: None|bool=False
-    ) -> int:
+    ) -> bool|cudf.DataFrame:
         """
         Converte valores numéricos em formato string com separador de milhar e decimal
         para um formato numérico compatível com float, processando o DataFrame em blocos 
@@ -102,29 +131,37 @@ class NumericUtils:
         Parâmetros
         ----------
         current_df : cudf.DataFrame
-            DataFrame do cuDF que contém a coluna a ser processada.
+            DataFrame do cuDF
         column_name : str
-            Nome da coluna que será convertida.
+            Nome da coluna
         chunk_size : int, default=500_000
-            Número máximo de linhas processadas por vez. Útil para grandes DataFrames.
+            Número máximo de linhas processadas por vez
         inplace : bool, default=False
-            Quando True, altera a coluna do dataframe ideal, recomendado para dataframe grandes.
+            Quando True, altera a coluna do dataframe ideal, recomendado para dataframe grandes
         """
-        pattern: str = (
-            r'^\d{1,3}(?:\.\d{3})*,\d+$|'
-            r'^\d*,\d+$'
+        is_valid: bool = is_valid_to_normalize(
+            series=dataframe[column_name],
+            valid_types=CudfSupportedDtypes.str_types,
+        )
+        
+        if not is_valid:
+            return False
+
+        # has_list: bool = NumericUtils.has_list(series=dataframe[column_name])
+
+        # if has_list:
+        #     return False 
+        
+        pattern: str = combine_regex(regex_pattern_bad_formatted_number)
+        
+        has_bad_formatted_number: bool = StringUtils.match(
+            series=dataframe[column_name],
+            regex=pattern,
+            match_min_rate=0
         )
 
-        array_pattern: str = r'[\[\]]'
-
-        if dataframe[column_name].dtype not in ["string", "object"]:
-            return dataframe if not inplace else None
-
-        if AnalysisUtils.any_pattern(series=dataframe[column_name], pattern=array_pattern):
-            return dataframe if not inplace else None 
-        
-        if not AnalysisUtils.any_pattern(series=dataframe[column_name], pattern=pattern):
-            return dataframe if not inplace else None 
+        if not has_bad_formatted_number:
+            return False 
 
         if not inplace:
             dataframe: cudf.DataFrame = dataframe.copy()
@@ -148,3 +185,63 @@ class NumericUtils:
 
         if not inplace:
             return dataframe
+
+        return True
+
+
+    @staticmethod
+    def is_number(
+        series: cudf.Series,
+        match_min_rate: None|int=50,
+        chunk_size: int = 500_000,
+    ) -> bool:
+        is_valid: bool = is_valid_to_normalize(
+            series=series,
+            valid_types=CudfSupportedDtypes.str_types,
+        )
+        if not is_valid:
+            return False
+
+        all_regex_valid_number: list[dict[str, str]] = regex_pattern_valid_number + regex_pattern_bad_formatted_number
+
+        combined_regex: str = combine_regex(all_regex_valid_number)
+
+        has_match: bool = StringUtils.match(
+            series=series,
+            regex=combined_regex,
+            match_min_rate=match_min_rate,
+            chunk_size=chunk_size
+        )
+
+        if has_match:
+            return True
+
+        return False
+
+
+    @staticmethod
+    def has_list(
+        series: cudf.Series,
+        chunk_size: int = 500_000,
+    ) -> bool:
+        
+        is_valid: bool = is_valid_to_normalize(
+            series=series,
+            valid_types=CudfSupportedDtypes.str_types,
+        )
+        if not is_valid:
+            return False
+
+        combined_regex: str = combine_regex(regex_pattern_list)
+
+        has_match: bool = StringUtils.match(
+            series=series,
+            regex=combined_regex,
+            match_min_rate=0,
+            chunk_size=chunk_size
+        )
+
+        if has_match:
+            return True
+
+        return False
