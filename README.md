@@ -1,13 +1,14 @@
 # jiboia-gpu
 
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 254 254" width="120">
-  <circle cx="127" cy="127" r="127" fill="#EEEEEE"/>
-  <g transform="translate(127,127) scale(0.6) translate(-127,-127)">
-    <path fill="#51A8B1" d="M197 148l-141 0c-2,0 -4,1 -5,3 -1,2 -1,4 0,6 1,2 3,3 5,3l141 0c26,0 47,21 47,47 0,26 -21,47 -47,47l-187 0c3,-23 23,-41 47,-41l141 0c3,0 6,-3 6,-6 0,-3 -3,-6 -6,-6l-141 0c-17,0 -32,-9 -41,-24 -8,-15 -8,-33 0,-47 8,-15 24,-24 41,-24l141 0c3,0 6,-3 6,-6 0,-3 -3,-6 -6,-6l-141 0c-17,0 -32,-9 -41,-24 -8,-15 -8,-33 0,-47 8,-15 24,-24 41,-24l135 0 53 25c1,7 -2,13 -8,17l-180 0c-2,0 -4,1 -5,3 -1,2 -1,4 0,6 1,2 3,3 5,3l141 0c26,0 47,21 47,47 0,26 -21,48 -47,48l-1 0zm6 -124c0,-3 -3,-6 -6,-6 -3,0 -6,3 -6,6 0,3 3,6 6,6 3,0 6,-3 6,-6z"/>
-  </g>
-</svg>
+<img src="jiboia_icon.svg" width="120" alt="Jiboia Icon"/>
 
-**jiboia-gpu** is a Python package designed to **efficiently normalize and optimize DataFrames using NVIDIA GPUs via the RAPIDS ecosystem**.
+**jiboia-gpu** is a Python library designed to **normalize data and optimize data types** of a DataFrame efficiently using **NVIDIA GPUs** through the **RAPIDS** ecosystem.
+
+## Requirements
+
+- NVIDIA GPU with CUDA support (CUDA 12+ recommended)
+- Compatible cuDF version (>=25.8)
+- Python >= 3.9
 
 ![Python](https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Nvidia](https://img.shields.io/badge/nvidia-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
@@ -38,7 +39,7 @@
     - **European-style decimals:** `"0,1"`, `",50"`, `"1000.000,00"`
     - **False floats converted to integers:** `"1000.00"`, `"0.0"`, `"1.0"`
 
-### Date/Time Conversion**
+### Date/Time Conversion
   - Parses strings representing dates in multiple formats: `yyyy?mm?dd`, `dd?mm?yyyy`, `yyyymmdd`, `dd?mm?yy` → `datetime`.
   - Converts time strings like `hhmm UTC`, `hh:mm:ss`, `hh:mm:ss.s` → `timedelta`.
 
@@ -52,12 +53,6 @@
 ### Memory Optimization
 - Provides memory usage information for DataFrames.
 - Automatically converts columns to the most memory-efficient types.
-
-## Requirements
-
-- NVIDIA GPU with CUDA support (CUDA 12+ recommended)
-- Compatible cuDF version (>=25.8)
-- Python >= 3.9
 
 ### Test coverage with pytest
 
