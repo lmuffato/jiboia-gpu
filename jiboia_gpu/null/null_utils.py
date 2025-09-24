@@ -34,18 +34,33 @@ class NullUtils:
         if not inplace:
             dataframe = dataframe.copy()
 
+        # total_rows: int = len(dataframe)
+
+        # for start_index in range(0, total_rows, chunk_size):
+        #     end_index: int = min(start_index + chunk_size, total_rows)
+            
+        #     chunk: cudf.Series = dataframe[column_name].iloc[start_index:end_index]
+
+        #     mask: cudf.Series = chunk.str.lower().isin(all_null_values)
+
+        #     chunk.loc[mask] = None
+
+        #     dataframe.iloc[start_index:end_index, dataframe.columns.get_loc(column_name)] = chunk
+
         total_rows: int = len(dataframe)
+        column_index: int = dataframe.columns.get_loc(column_name)
 
         for start_index in range(0, total_rows, chunk_size):
             end_index: int = min(start_index + chunk_size, total_rows)
-            
-            chunk: cudf.Series = dataframe[column_name].iloc[start_index:end_index]
 
-            mask: cudf.Series = chunk.str.lower().isin(all_null_values)
+            series_chunk = dataframe.iloc[start_index:end_index, column_index]
 
-            chunk.loc[mask] = None
+            mask: cudf.Series = series_chunk.str.lower().isin(all_null_values)
 
-            dataframe.iloc[start_index:end_index, dataframe.columns.get_loc(column_name)] = chunk
+            dataframe.iloc[start_index:end_index, column_index] = series_chunk.where(~mask, None)
+
+        del column_index
+        del total_rows
 
         print_normalize_type_log(
             column_name=column_name,

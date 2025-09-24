@@ -52,20 +52,23 @@ test_df: cudf.DataFrame = cudf.DataFrame({
 
 
 def test_normalize() -> None:
+    column_name="str_witch_spaces"
+
     multiple_spaces_before: int = (
-        test_df["str_witch_spaces"]
+        test_df[column_name]
         .str.contains(r'(^\s+|\s+$|\s{2,})', regex=True)
     ).sum()
     
     StringUtils.normalize(
         dataframe=test_df,
+        column_name=column_name,
         to_case=None,
         to_ASCII=False,
         inplace=True
     ) == None
 
     multiple_spaces_after: int = (
-        test_df["str_witch_spaces"]
+        test_df[column_name]
         .str.contains(r'(^\s+|\s+$|\s{2,})', regex=True)
     ).sum()
 
@@ -84,4 +87,4 @@ def test_normalize() -> None:
 
     assert (multiple_spaces_before > 0)
     assert (multiple_spaces_after == 0)
-    assert (test_df["str_witch_spaces"].to_arrow().to_pylist() == expected)
+    assert (test_df[column_name].to_arrow().to_pylist() == expected)

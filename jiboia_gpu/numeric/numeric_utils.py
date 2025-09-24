@@ -40,7 +40,7 @@ class NumericUtils:
             O DataFrame modificado se inplace=False, senão None.
         """
         valid_types: list[str] = CudfSupportedDtypes.str_types + CudfSupportedDtypes.numeric_types
-        
+
         is_valid: bool = is_valid_to_normalize(
             series=dataframe[column_name],
             valid_types=valid_types
@@ -49,10 +49,14 @@ class NumericUtils:
         if not is_valid:
             return False
         
-        is_number: bool = NumericUtils.is_number(
+        original_dtype: cp.dtypes = dataframe[column_name].dtype
+        
+        is_number_in_str: bool = NumericUtils.is_number_in_str(
             series=dataframe[column_name],
             match_min_rate=match_min_rate
         )
+
+        is_number: bool = is_number_in_str or (str(original_dtype) in  CudfSupportedDtypes.numeric_types)
 
         if not is_number:
             return False
@@ -146,11 +150,6 @@ class NumericUtils:
         
         if not is_valid:
             return False
-
-        # has_list: bool = NumericUtils.has_list(series=dataframe[column_name])
-
-        # if has_list:
-        #     return False 
         
         pattern: str = combine_regex(regex_pattern_bad_formatted_number)
         
@@ -167,21 +166,25 @@ class NumericUtils:
             dataframe: cudf.DataFrame = dataframe.copy()
 
         total_rows: int = len(dataframe)
+        column_index: int = dataframe.columns.get_loc(column_name)
 
         for start_index in range(0, total_rows, chunk_size):
-
             end_index: int = min(start_index + chunk_size, total_rows)
 
-            chunk: cudf.Series = dataframe[column_name].iloc[start_index:end_index]
+            series_chunk = dataframe.iloc[start_index:end_index, column_index]
 
-            mask: cudf.Series = chunk.str.match(pattern)
-            
-            chunk.loc[mask] = (chunk.loc[mask]
+            mask: cudf.Series = series_chunk.str.match(pattern)
+
+            series_chunk.loc[mask] = (
+                series_chunk.loc[mask]
                 .str.replace(".", "", regex=False)
                 .str.replace(",", ".", regex=False)
             )
 
-            dataframe.iloc[start_index:end_index, dataframe.columns.get_loc(column_name)] = chunk
+            dataframe.iloc[start_index:end_index, column_index] = series_chunk
+
+        del column_index
+        del total_rows
 
         if not inplace:
             return dataframe
@@ -190,7 +193,7 @@ class NumericUtils:
 
 
     @staticmethod
-    def is_number(
+    def is_number_in_str(
         series: cudf.Series,
         match_min_rate: None|int=50,
         chunk_size: int = 500_000,

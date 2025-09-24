@@ -15,6 +15,7 @@ class BooleanUtils:
     def normalize(
         dataframe: cudf.DataFrame,
         column_name: str,
+        bool_number: bool=False,
         match_min_rate: int=50,
         inplace: None|bool=False,
         show_log: None|bool=True,
@@ -34,29 +35,31 @@ class BooleanUtils:
         if not inplace:
             dataframe: cudf.DataFrame = dataframe.copy()
 
-        has_normalized: bool = BooleanUtils.from_binary_num(
-            dataframe=dataframe,
-            column_name=column_name,
-            inplace=True,
-            show_log=show_log
-        )
+        if bool_number:
+            has_normalized: bool = BooleanUtils.from_binary_num(
+                dataframe=dataframe,
+                column_name=column_name,
+                inplace=True,
+                show_log=show_log
+            )
 
-        if has_normalized:
-            if not inplace:
-                return dataframe
-            return True
+            if has_normalized:
+                if not inplace:
+                    return dataframe
+                return True
 
-        has_normalized: bool = BooleanUtils.from_binary_str(
-            dataframe=dataframe,
-            column_name=column_name,
-            inplace=True,
-            show_log=show_log
-        )
+        if bool_number:
+            has_normalized: bool = BooleanUtils.from_binary_str(
+                dataframe=dataframe,
+                column_name=column_name,
+                inplace=True,
+                show_log=show_log
+            )
 
-        if has_normalized:
-            if not inplace:
-                return dataframe
-            return True
+            if has_normalized:
+                if not inplace:
+                    return dataframe
+                return True
         
         has_normalized: bool = BooleanUtils.from_bool_str(
             dataframe=dataframe,
@@ -189,16 +192,26 @@ class BooleanUtils:
         if not is_bool:
             return False
 
-        mapping_dict = {}
-
+        mapping_dict: dict[str, str] = {}
         for pattern in regex_pattern_boolean:
             for fmt in pattern["format"]:
                 mapping_dict[fmt] = pattern["pattern"]
-        
-        dataframe[column_name] = (
-            dataframe[column_name].astype("string").str.lower().map(mapping_dict)
-        )
-        
+
+        total_rows: int = len(dataframe)
+        column_index: int = dataframe.columns.get_loc(column_name)
+
+        for start_index in range(0, total_rows, chunk_size):
+            end_index: int = min(start_index + chunk_size, total_rows)
+
+            series_chunk = dataframe.iloc[start_index:end_index, column_index]
+
+            series_chunk = series_chunk.astype("string").str.lower().map(mapping_dict)
+
+            dataframe.iloc[start_index:end_index, column_index] = series_chunk
+
+        del column_index
+        del total_rows
+
         dataframe[column_name] = dataframe[column_name].astype("boolean")
 
         print_log(column_name=column_name, column_type=str(dataframe[column_name].dtype), show_log=show_log)

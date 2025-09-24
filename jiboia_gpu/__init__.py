@@ -23,6 +23,8 @@ class JiboiaGPUConfig:
         self.null_values: list[str] = [],
         self.to_case: None|Literal['lower', 'upper']=None,
         self.to_ASCII: bool=False,
+        self.bool_number: bool=False
+        self.create_category: bool=True
 
 
 config = JiboiaGPUConfig()
@@ -71,7 +73,9 @@ class JiboiaGPU:
         match_min_rate: int = 0,
         null_values: list[str] = [],
         to_case: None|Literal['lower', 'upper']=None,
-        to_ASCII: bool=False
+        to_ASCII: bool=False,
+        bool_number: bool=False,
+        create_category: bool=True
     ) -> None:     
         config.inplace = inplace
         config.show_log = show_log
@@ -80,6 +84,8 @@ class JiboiaGPU:
         config.null_values = null_values
         config.to_case = to_case
         config.to_ASCII = to_ASCII
+        config.bool_number = bool_number
+        config.create_category = create_category
 
 
     @staticmethod

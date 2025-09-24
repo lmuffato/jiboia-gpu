@@ -74,12 +74,23 @@ class StringUtils:
 
         if not inplace:
             dataframe: cudf.DataFrame = dataframe.copy()
-            
-        dataframe[column_name] = (
-            dataframe[column_name]
-            .str.normalize_spaces()
-            .str.strip()
-        )
+
+        total_rows: int = len(dataframe)
+        column_index: int = dataframe.columns.get_loc(column_name)
+
+        for start_index in range(0, total_rows, chunk_size):
+            end_index: int = min(start_index + chunk_size, total_rows)
+
+            series_chunk = dataframe.iloc[start_index:end_index, column_index]
+
+            # normaliza espaços e remove espaços extras no início/fim
+            series_chunk = series_chunk.str.normalize_spaces().str.strip()
+
+            dataframe.iloc[start_index:end_index, column_index] = series_chunk
+
+        del column_index
+        del total_rows
+
         print_normalize_space_log(
             column_name=column_name,
             show_log=show_log
@@ -124,62 +135,53 @@ class StringUtils:
             return True
 
         if to_ASCII and to_case == "lower":
-            dataframe[column_name] = (
-                dataframe[column_name].str.lower()
-                .str.replace(r"[áàâãä]", "a", regex=True)
-                .str.replace(r"[éèêë]", "e", regex=True)
-                .str.replace(r"[íìîï]", "i", regex=True)
-                .str.replace(r"[óòôõö]", "o", regex=True)
-                .str.replace(r"[úùûü]", "u", regex=True)
-                .str.replace(r"[ç]", "c", regex=True)
+
+            total_rows: int = len(dataframe)
+            column_index: int = dataframe.columns.get_loc(column_name)
+
+            for start_index in range(0, total_rows, chunk_size):
+                end_index: int = min(start_index + chunk_size, total_rows)
+
+                series_chunk = dataframe.iloc[start_index:end_index, column_index]
+
+                series_chunk = (
+                    series_chunk.str.lower()
+                    .str.replace(r"[áàâãä]", "a", regex=True)
+                    .str.replace(r"[éèêë]", "e", regex=True)
+                    .str.replace(r"[íìîï]", "i", regex=True)
+                    .str.replace(r"[óòôõö]", "o", regex=True)
+                    .str.replace(r"[úùûü]", "u", regex=True)
+                    .str.replace(r"[ç]", "c", regex=True)
+                )
+
+                dataframe.iloc[start_index:end_index, column_index] = series_chunk
+
+            del column_index
+            del total_rows
+
+            print_normalize_string_log(
+                column_name=column_name,
+                show_log=show_log,
+                to_case=to_case,
+                to_ASCII=to_ASCII
             )
+
             if not inplace:
                 return dataframe
             return True
 
         if to_ASCII and to_case == "upper":
-            dataframe[column_name] = (
-                dataframe[column_name].str.upper()
-                .str.replace(r"[ÁÀÂÃÄ]", "A", regex=True)
-                .str.replace(r"[ÉÈÊË]", "E", regex=True)
-                .str.replace(r"[ÍÌÎÏ]", "I", regex=True)
-                .str.replace(r"[ÓÒÔÕÖ]", "O", regex=True)
-                .str.replace(r"[ÚÙÛÜ]", "U", regex=True)
-                .str.replace(r"[Ç]", "C", regex=True)
-            )
-            if not inplace:
-                return dataframe
-            return True
-        
+            total_rows: int = len(dataframe)
+            column_index: int = dataframe.columns.get_loc(column_name)
 
-        if to_ASCII and not to_case:
-            dataframe[column_name] = (
-                dataframe[column_name]
-                .str.replace(r"[áàâãä]", "a", regex=True)
-                .str.replace(r"[ÁÀÂÃÄ]", "A", regex=True)
-                .str.replace(r"[éèêë]", "e", regex=True)
-                .str.replace(r"[ÉÈÊË]", "E", regex=True)
-                .str.replace(r"[íìîï]", "i", regex=True)
-                .str.replace(r"[ÍÌÎÏ]", "I", regex=True)
-                .str.replace(r"[óòôõö]", "o", regex=True)
-                .str.replace(r"[ÓÒÔÕÖ]", "O", regex=True)
-                .str.replace(r"[úùûü]", "u", regex=True)
-                .str.replace(r"[ÚÙÛÜ]", "U", regex=True)
-                .str.replace(r"[ç]", "c", regex=True)
-                .str.replace(r"[Ç]", "C", regex=True)
-            )
-            if not inplace:
-                return dataframe
-            return True
+            for start_index in range(0, total_rows, chunk_size):
+                end_index: int = min(start_index + chunk_size, total_rows)
 
-        if to_case == "upper":
-            processed_column = (
-                processed_column
-                .str.upper()
-            )
-            if to_ASCII:
-                processed_column = (
-                    processed_column
+                series_chunk = dataframe.iloc[start_index:end_index, column_index]
+
+                # normalização para uppercase e remoção de acentos maiúsculos
+                series_chunk = (
+                    series_chunk.str.upper()
                     .str.replace(r"[ÁÀÂÃÄ]", "A", regex=True)
                     .str.replace(r"[ÉÈÊË]", "E", regex=True)
                     .str.replace(r"[ÍÌÎÏ]", "I", regex=True)
@@ -188,31 +190,64 @@ class StringUtils:
                     .str.replace(r"[Ç]", "C", regex=True)
                 )
 
-        if to_ASCII and not to_case:
-            dataframe[column_name] = (
-                dataframe[column_name]
-                .str.replace(r"[áàâãä]", "a", regex=True)
-                .str.replace(r"[ÁÀÂÃÄ]", "A", regex=True)
-                .str.replace(r"[éèêë]", "e", regex=True)
-                .str.replace(r"[ÉÈÊË]", "E", regex=True)
-                .str.replace(r"[íìîï]", "i", regex=True)
-                .str.replace(r"[ÍÌÎÏ]", "I", regex=True)
-                .str.replace(r"[óòôõö]", "o", regex=True)
-                .str.replace(r"[ÓÒÔÕÖ]", "O", regex=True)
-                .str.replace(r"[úùûü]", "u", regex=True)
-                .str.replace(r"[ÚÙÛÜ]", "U", regex=True)
-                .str.replace(r"[ç]", "c", regex=True)
-                .str.replace(r"[Ç]", "C", regex=True)
+                dataframe.iloc[start_index:end_index, column_index] = series_chunk
+
+            del column_index
+            del total_rows
+
+            print_normalize_string_log(
+                column_name=column_name,
+                show_log=show_log,
+                to_case=to_case,
+                to_ASCII=to_ASCII
             )
+
             if not inplace:
                 return dataframe
             return True
+        
 
-        print_normalize_string_log(
-            show_log=show_log,
-            to_case=to_case,
-            to_ASCII=to_ASCII
-        )
+        if to_ASCII and not to_case:
+            total_rows: int = len(dataframe)
+            column_index: int = dataframe.columns.get_loc(column_name)
+
+            for start_index in range(0, total_rows, chunk_size):
+                end_index: int = min(start_index + chunk_size, total_rows)
+
+                series_chunk = dataframe.iloc[start_index:end_index, column_index]
+
+                # substituição de todos os acentos e cedilhas
+                series_chunk = (
+                    series_chunk
+                    .str.replace(r"[áàâãä]", "a", regex=True)
+                    .str.replace(r"[ÁÀÂÃÄ]", "A", regex=True)
+                    .str.replace(r"[éèêë]", "e", regex=True)
+                    .str.replace(r"[ÉÈÊË]", "E", regex=True)
+                    .str.replace(r"[íìîï]", "i", regex=True)
+                    .str.replace(r"[ÍÌÎÏ]", "I", regex=True)
+                    .str.replace(r"[óòôõö]", "o", regex=True)
+                    .str.replace(r"[ÓÒÔÕÖ]", "O", regex=True)
+                    .str.replace(r"[úùûü]", "u", regex=True)
+                    .str.replace(r"[ÚÙÛÜ]", "U", regex=True)
+                    .str.replace(r"[ç]", "c", regex=True)
+                    .str.replace(r"[Ç]", "C", regex=True)
+                )
+
+                dataframe.iloc[start_index:end_index, column_index] = series_chunk
+
+            del column_index
+            del total_rows
+
+            print_normalize_string_log(
+                column_name=column_name,
+                show_log=show_log,
+                to_case=to_case,
+                to_ASCII=to_ASCII
+            )
+            
+            if not inplace:
+                return dataframe
+            return True
 
         return False
 

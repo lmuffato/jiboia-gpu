@@ -28,7 +28,7 @@ class DateTimeUtils:
             show_log=show_log
         )
 
-
+    
     @staticmethod
     def fix_digit_shape(
         dataframe: cudf.DataFrame,
@@ -87,25 +87,25 @@ class DateTimeUtils:
         if not is_valid:
             return False
 
-        is_unique_datetime_format: bool = DateTimeUtils.is_unique_datetime_format(
-            series=dataframe[column_name],
-        )
+        # is_unique_datetime_format: bool = DateTimeUtils.is_unique_datetime_format(
+        #     series=dataframe[column_name],
+        # )
 
-        if is_unique_datetime_format:
-            if not inplace:
-                dataframe: cudf.DataFrame = dataframe.copy()
+        # if is_unique_datetime_format:
+        #     if not inplace:
+        #         dataframe: cudf.DataFrame = dataframe.copy()
 
-            combined_regex: str = combine_regex(regex_pattern_datetime_all)
+        #     combined_regex: str = combine_regex(regex_pattern_datetime_all)
 
-            mask = dataframe[column_name].str.match(combined_regex)
+        #     mask = dataframe[column_name].str.match(combined_regex)
             
-            dataframe.loc[(~mask), column_name] = None
+        #     dataframe.loc[(~mask), column_name] = None
 
-            dataframe[column_name] = cudf.to_datetime(dataframe[column_name])
+        #     dataframe[column_name] = cudf.to_datetime(dataframe[column_name])
 
-            if not inplace:
-                return dataframe
-            return True
+        #     if not inplace:
+        #         return dataframe
+        #     return True
 
         is_date: bool = DateTimeUtils.is_date(
             series=dataframe[column_name],
@@ -118,14 +118,26 @@ class DateTimeUtils:
         if not inplace:
             dataframe: cudf.DataFrame = dataframe.copy()
 
-        dataframe[column_name] = (
-            dataframe[column_name]
-            .str.replace("/", "-", regex=False)
-            .str.replace(" ", "-", regex=False)
-            .str.replace("_", "-", regex=False)
-            .str.replace(".", "-", regex=False)
-        )
+        total_rows: int = len(dataframe)
+        column_index: int = dataframe.columns.get_loc(column_name)
 
+        for start_index in range(0, total_rows, chunk_size):
+            end_index: int = min(start_index + chunk_size, total_rows)
+
+            series_chunk = dataframe.iloc[start_index:end_index, column_index]
+
+            # substituições diretas in-place
+            series_chunk = (
+                series_chunk
+                .str.replace("/", "-", regex=False)
+                .str.replace(" ", "-", regex=False)
+                .str.replace("_", "-", regex=False)
+                .str.replace(".", "-", regex=False)
+            )
+
+            dataframe.iloc[start_index:end_index, column_index] = series_chunk
+
+        # verificação de formato ruim
         has_bad_date_format: bool = StringUtils.match(
             series=dataframe[column_name],
             regex=combine_regex(regex_pattern_bad_date)
@@ -134,20 +146,59 @@ class DateTimeUtils:
         if has_bad_date_format:
             DateTimeUtils.fix_digit_shape(dataframe, column_name, inplace=True)
 
+        # aplicação de regex de data em chunks
         combined_regex: str = combine_regex(regex_pattern_date)
 
-        mask = dataframe[column_name].str.match(combined_regex)
+        for start_index in range(0, total_rows, chunk_size):
+            end_index: int = min(start_index + chunk_size, total_rows)
+
+            series_chunk = dataframe.iloc[start_index:end_index, column_index]
+
+            mask = series_chunk.str.match(combined_regex)
+
+            # valores inválidos viram None
+            series_chunk = series_chunk.where(mask, None)
+
+            # para cada padrão de data válido, converte
+            for pattern in regex_pattern_date:
+                mask_pattern = series_chunk.str.match(pattern["regex"])
+                series_chunk.loc[mask_pattern] = cudf.to_datetime(series_chunk.loc[mask_pattern], format=pattern["format"])
+
+            dataframe.iloc[start_index:end_index, column_index] = series_chunk
+
+        del column_index
+        del total_rows
+
+        # dataframe[column_name] = (
+        #     dataframe[column_name]
+        #     .str.replace("/", "-", regex=False)
+        #     .str.replace(" ", "-", regex=False)
+        #     .str.replace("_", "-", regex=False)
+        #     .str.replace(".", "-", regex=False)
+        # )
+
+        # has_bad_date_format: bool = StringUtils.match(
+        #     series=dataframe[column_name],
+        #     regex=combine_regex(regex_pattern_bad_date)
+        # )
+
+        # if has_bad_date_format:
+        #     DateTimeUtils.fix_digit_shape(dataframe, column_name, inplace=True)
+
+        # combined_regex: str = combine_regex(regex_pattern_date)
+
+        # mask = dataframe[column_name].str.match(combined_regex)
         
-        dataframe.loc[(~mask), column_name] = None
+        # dataframe.loc[(~mask), column_name] = None
         
-        for pattern in regex_pattern_date:
-            mask = dataframe[column_name].str.match(pattern["regex"])
+        # for pattern in regex_pattern_date:
+        #     mask = dataframe[column_name].str.match(pattern["regex"])
             
-            dataframe.loc[mask, column_name] = (
-                cudf.to_datetime(
-                    dataframe.loc[mask, column_name], format=pattern["format"]
-                )
-            )
+        #     dataframe.loc[mask, column_name] = (
+        #         cudf.to_datetime(
+        #             dataframe.loc[mask, column_name], format=pattern["format"]
+        #         )
+        #     )
 
         dataframe[column_name] = dataframe[column_name].astype("datetime64[s]")
 

@@ -52,7 +52,8 @@ def print_normalize_space_log(
         )
 
 
-def print_normalize_df_string_log(
+def print_normalize_string_log(
+    column_name: str,
     to_case: None|str=None,
     to_ASCII: bool = False,
     show_log: bool=True
@@ -72,6 +73,8 @@ def print_normalize_df_string_log(
         if len(msg) > 0:
             print(
                 print_text_green("Done!"),
+                "in column",
+                print_text_yellow(column_name),
                 "all",
                 print_text_yellow("string"),
                 "were converted to",
@@ -121,6 +124,22 @@ def print_normalize_df_type_log(
         )
 
 
+def print_normalize_df_type_log(
+    value_original: str,
+    value_final: str,
+    show_log: bool=True
+) -> None:
+    if show_log:
+        print(
+            print_text_green("Done!"),
+            "all",
+            print_text_yellow(value_original),
+            "converted to",
+            print_text_yellow(value_final)
+        )
+
+
+
 def print_drop_column_log(
     columns_to_delete: list[str],
     show_log: bool=True
@@ -155,3 +174,43 @@ def print_warning_encode_file_log(
             "and cudf only supports",
             print_text_yellow("utf-8")
         )
+
+
+def print_normalize_df_space_log(
+    show_log: bool=True,
+) -> None:
+    if show_log:
+        print(
+            print_text_green("Done!"),
+            "all duplicate and edge",
+            print_text_yellow("spaces"),
+            "have been",
+            print_text_yellow("removed")
+        )
+
+
+def print_normalize_df_string_log(
+    to_case: None|str=None,
+    to_ASCII: bool = False,
+    show_log: bool=True
+) -> None:
+    if show_log:
+        to_case_msg: str = ''
+
+        if to_case == "upper":
+            to_case_msg = "uppercase"
+        if to_case == "lower":
+            to_case_msg = "lowercase"
+
+        to_ASCII_msg: str = "ASCII" if to_ASCII else ""
+
+        msg: str = " ".join(filter(None, [to_case_msg, to_ASCII_msg]))
+
+        if len(msg) > 0:
+            print(
+                print_text_green("Done!"),
+                "all",
+                print_text_yellow("strings"),
+                "were converted to",
+                print_text_yellow(msg)
+            )

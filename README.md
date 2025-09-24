@@ -1,59 +1,339 @@
-# Jiboia
+# jiboia-gpu
 
-**jiboia-gpu** is a Python package to **normalize and optimize DataFrames automatically** efficiently using the Nvidia GPU in the RAPIDS ecosystem.
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 254 254" width="120">
+  <circle cx="127" cy="127" r="127" fill="#EEEEEE"/>
+  <g transform="translate(127,127) scale(0.6) translate(-127,-127)">
+    <path fill="#51A8B1" d="M197 148l-141 0c-2,0 -4,1 -5,3 -1,2 -1,4 0,6 1,2 3,3 5,3l141 0c26,0 47,21 47,47 0,26 -21,47 -47,47l-187 0c3,-23 23,-41 47,-41l141 0c3,0 6,-3 6,-6 0,-3 -3,-6 -6,-6l-141 0c-17,0 -32,-9 -41,-24 -8,-15 -8,-33 0,-47 8,-15 24,-24 41,-24l141 0c3,0 6,-3 6,-6 0,-3 -3,-6 -6,-6l-141 0c-17,0 -32,-9 -41,-24 -8,-15 -8,-33 0,-47 8,-15 24,-24 41,-24l135 0 53 25c1,7 -2,13 -8,17l-180 0c-2,0 -4,1 -5,3 -1,2 -1,4 0,6 1,2 3,3 5,3l141 0c26,0 47,21 47,47 0,26 -21,48 -47,48l-1 0zm6 -124c0,-3 -3,-6 -6,-6 -3,0 -6,3 -6,6 0,3 3,6 6,6 3,0 6,-3 6,-6z"/>
+  </g>
+</svg>
 
-Key features:
-- **String normalization**:
-  - Removes extra spaces.
-  - Strips leading and trailing spaces.
-  - Detects data pollution (e.g., columns that should be numeric but contain strings).
-- **Type conversion**:
-  - Numeric strings and floats ending in `.0` → integers (`int8`, `int16`, `int32`, …).
-  - Converts floats and integers to the most memory-efficient type.
-  - Converts strings in various date formats to `datetime` (`yyyy?mm?dd`, `dd?mm?yyyy`, `yyyymmd`, `dd?mm?yy`).
-  - Converts time strings (`hhmm UTC`, `hh:mm:ss`, `hh:mm:ss.s`) to `timedelta`.
-- **Null standardization** → converts different null representations to `pd.NA`.
-- **Automatic CSV detection**:
-  - Detects delimiter.
-  - Detects encoding.
-- **Memory optimization**:
-  - Provides memory usage information for DataFrames.
-  - Converts columns to the most compact types possible.
+**jiboia-gpu** is a Python package designed to **efficiently normalize and optimize DataFrames using NVIDIA GPUs via the RAPIDS ecosystem**.
+
+![Python](https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Nvidia](https://img.shields.io/badge/nvidia-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
+![Pytest](https://img.shields.io/badge/pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
+![Spyder](https://img.shields.io/badge/spyder-8C0000?style=for-the-badge&logo=spyderide&logoColor=white)
+ ![GoogleColab](https://img.shields.io/badge/googlecolab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white)
+ ![Jupyter](https://img.shields.io/badge/jupyter-F37626?style=for-the-badge&logo=jupyter&logoColor=white)
+ 
+**By [Lucas Muffato](https://www.linkedin.com/in/lucasmuffato/) 🇧🇷**
+
+
+## Key Features
+
+### String Normalization
+- Trims leading and trailing spaces.
+- Removes extra whitespace.
+- Detects data inconsistencies (e.g., numeric columns containing strings).
+
+### Numeric Conversion**
+  - Converts numeric strings and floats ending with `.0` into integers (`int8`, `int16`, `int32`, …).
+  - Optimizes numeric types for minimal memory usage.
+  - Recognizes many numeric formats, including:
+    `"0.1"`, `"10"`, `".0452"`, `"1000.00"`, `"0,1"`, `",50"`, `"1000.000,00"`, `"1,1"`, `"10000"`, `"5e6"`, `"2.5e-2"`, `"0e1"`, `".3e-2"`
+  - Categories of numeric recognition:
+    - **Standard integers and floats:** `"10"`, `"0.1"`, `"10000"`, `"1000.00"`
+    - **Floats without leading zero:** `".0452"`, `".3e-2"`
+    - **Scientific notation:** `"5e6"`, `"2.5e-2"`, `"0e1"`
+    - **European-style decimals:** `"0,1"`, `",50"`, `"1000.000,00"`
+    - **False floats converted to integers:** `"1000.00"`, `"0.0"`, `"1.0"`
+
+### Date/Time Conversion**
+  - Parses strings representing dates in multiple formats: `yyyy?mm?dd`, `dd?mm?yyyy`, `yyyymmdd`, `dd?mm?yy` → `datetime`.
+  - Converts time strings like `hhmm UTC`, `hh:mm:ss`, `hh:mm:ss.s` → `timedelta`.
+
+### Null Standardization
+- Converts various null representations to `cudf.NA`.
+
+### Automatic CSV Detection
+- Detects the correct delimiter.
+- Detects file encoding automatically.
+
+### Memory Optimization
+- Provides memory usage information for DataFrames.
+- Automatically converts columns to the most memory-efficient types.
+
+## Requirements
+
+- NVIDIA GPU with CUDA support (CUDA 12+ recommended)
+- Compatible cuDF version (>=25.8)
+- Python >= 3.9
+
+### Test coverage with pytest
+
+- ✅ <span style="color:green; font-weight:bold">100%</span> in Numeric Normalization.
+- ✅ <span style="color:green; font-weight:bold">100%</span> in String Normalization.
+
+
+## Requirements to Contribute
+
+To contribute to this project, please ensure the following:
+
+1. **Typing**  
+   All variables, attributes, and functions **must be typed**.
+
+2. **Automated Tests**  
+   All contributions **must include automated tests** using `pytest`.
+
+3. **Project Standards**  
+   All code **must follow the project coding standards**.
+
+4. **Imports Order**  
+   All imports **must be declared in alphabetical order**.
+
+
+## Quick Introduction
+
+```python
+from jiboia_gpu import jiboia_gpu as jb
+
+# =========================
+# DataFrame-related functions
+# =========================
+# jb.df -> DataFrame-related functions:
+#   - Delete columns
+#   - Normalize the entire DataFrame
+#   - Show RAM and VRAM memory usage
+# Examples:
+jb.df.normalize(df)          # Normalize the entire DataFrame
+jb.df.cudf_size_info(df)     # Show VRAM usage of the DataFrame
+
+# =========================
+# Number-related functions
+# =========================
+# jb.num -> Number-related functions
+# Example:
+jb.num.normalize(df, column_name)       # Normalize numeric columns
+
+# =========================
+# Date/Time normalization
+# =========================
+jb.datetime.normalize(df, column_name)  # Convert strings to datetime
+
+# =========================
+# Null normalization
+# =========================
+jb.null.normalize(df, column_name)      # Standardize null values to cudf.NA
+
+# =========================
+# String normalization
+# =========================
+jb.str.normalize(df, column_name)       # Normalize strings: trim, remove extra spaces, detect data pollution, creates the categorical type if there are 50% or more of the same values
+
+# =========================
+# Time normalization
+# =========================
+jb.time.normalize(df, column_name)      # Convert time strings to timedelta
+
+# =========================
+# Boolean normalization
+# =========================
+jb.bool.normalize(df, column_name)      # Convert columns to boolean values
+
+# =========================
+# CSV reading
+# =========================
+jb.csv.read_files(
+    folder_path="my_folder/",
+    start_part=1,
+    end_part=10
+)  # Read multiple CSV files automatically
+
 
 ---
 
-## Example Usage
+## Example of use
 
 ```python
 from jiboia-gpu import jiboia_gpu as jb
 
-pd.normalize_category("data_frame_cudf")
+col_str = "col_str"
+col_str_val = [
+    "Surucuçu",
+    "Cobra Cipó",
+    "King  Cobra",
+    "Jararacuçu",
+    "NA",
+    " Jiboia",
+    " Coral Verdadeira ",
+    "Jararaca  ",
+    "Surucucu",
+    "NA",
+    None,
+    "solid snake",
+    "null",
+    "unknown",
+    "Sea Snake ",
+]
 
+col_number_str = "col_number_str"
+col_number_str_val = [
+    "1",
+    "0.1",
+    "NA",
+    ".1",
+    "0,1",
+    ",50",
+    "1000.000,00",
+    "1,1",
+    "5e6",
+    "2.5e-2",
+    "0e1",
+    "unknown",
+    None,
+    "0e1",
+    ".3e-2",
+]
+
+col_number_false_float_str = "col_number_false_float_str"
+col_number_false_float_str_val = [
+    "10",
+    ".0",
+    "1000.00",
+    "0.0",
+    "100,00",
+    "1",
+    None,
+    "Na",
+    "10000",
+    "5e2",
+    "[1,2,3,4]",
+    "0e1",
+    None,
+    "10",
+    "1"
+]
+
+col_bool = "col_bool"
+col_bool_val = [
+    'YES',
+    'No',
+    None,
+    'invalid',
+    'YES',
+    'No',
+    None,
+    'YEs',
+    'invalido',
+    'yes',
+    'NA',
+    'on',
+    'off',
+    None,
+    'on'
+]
+
+col_date = "col_date"
+col_date_val = [
+    '15.06.2018',
+    '28/01/1990',
+    None,
+    'invalid',
+    '1988 02 08',
+    '20211212',
+    '01-02-2024',
+    '2023/12/20',
+    '20234550',
+    '2023-12-12',
+    '8-2-86',
+    '8-12-25',
+    '12-12-12',
+    '08-12-25',
+    None
+]
+
+
+col_datetime = "col_datetime"
+col_datetime_val = [
+    "2025-01-01 01:10:10",
+    "2026-02-02 02:20:20",
+    "2027-03-03 03:30:30",
+    "2028-04-04 04:40:40",
+    "2029-05-05 05:50:50",
+    "2030-06-06 06:00:00",
+    "2031-07-07 07:10:10",
+    "invalid",
+    "2033-09-09 09:30:30",
+    "2034-10-10 10:40:40",
+    "2035-11-11 11:50:50",
+    "2036-12-12 12:00:00",
+    "2037-01-13 13:10:10",
+    "2038-02-14 14:20:20",
+    "2039-03-15 15:30:30", 
+]
+
+col_time = "col_time"
+col_time_val = [
+    "0000UTC",
+    "0130UTC",
+    "NA",
+    "0540 UTC",
+    "1200UTC",
+    "00:21",
+    "1545UTC",
+    "invalid",
+    "2359UTC",
+    "null",
+    "23",
+    "20:23",
+    "10:12:12",
+    "07:32:12.1247",
+    None
+]
+
+col_cat = "col_cat"
+col_cat_val = [
+    "constrictor snake",
+    "sea snake",
+    "poisonous snake",
+    "constrictor snake",
+    "invalid",
+    "poisonous snake",
+    "constrictor snake",
+    "sea snake",
+    "poisonous snake",
+    "constrictor snake",
+    None,
+    "poisonous snake",
+    "constrictor snake",
+    "sea snake",
+    "poisonous snake",
+]
+
+df: cudf.DataFrame = cudf.DataFrame({
+    col_str: col_str_val,
+    col_number_str: col_number_str_val,
+    col_number_false_float_str: col_number_false_float_str_val,
+    col_bool: col_bool_val,
+    col_date: col_date_val,
+    col_datetime: col_datetime_val,
+    col_time: col_time_val,
+    col_cat: col_cat_val
+})
+
+Done! all values null in column col_time converted to <NA>
+Done! all duplicate and edge spaces have been removed in column col_cat
+Done! all values null in column col_cat converted to <NA>
+Done! column col_str converted to object
+Done! column col_number_str converted to float64
+Done! column col_number_false_float_str converted to int16
+Done! column col_bool converted to bool
+Done! column col_date converted to object
+Done! column col_date converted to datetime64[s]
+Done! column col_datetime converted to object
+Done! column col_time converted to timedelta64[ns]
+Done! column col_cat converted to object
+Done! the column col_cat was converted to a category
+
+print(df_normalized.dtypes)
+# results:
+col_str                                object
+col_number_str                        float64
+col_number_false_float_str              int16
+col_bool                                 bool
+col_date                        datetime64[s]
+col_datetime                   datetime64[ns]
+col_time                      timedelta64[ns]
+col_cat                              category
+dtype: object
 ```
-[ ] 1. PADRÃO:
-[x] 1.1. Métodos com o padrão pandas/cudf
-[ ] 1.2. Implementar dataframe de testes
-
-[ ] 2. STR:
-
-[ ] 2.1 ESPAÇOS
-[ ] 2.1.1 [ ] normalizar espaços no início, final e multiplos
-[ ] 2.1.2 [ ] função info, para informar dados da coluna (maior e menor string, se há nulos)
-[ ] 2.1.3 [ ] Testes Unitários
-
-[ ] 2.2. STRING
-[ ] 2.2.1. To uppercase, lowercase e ASCII
-[ ] 2.1.2 [ ] Testes Unitários
-
-[ ] 3. NUMEROS
-[ ] 3.1.1. Verificar se há tipos não numeros na coluna
-[ ] 3.1.1. 
-[ ] 3.1.1. Converter colunas string para numeros
-
-- [ ] normalize str testes
-- [ ] normalize numeric
-- [ ] normalize bool
-- [ ] normalize null
-- [ ] normalize time
-- [ ] normalize time
-- [ ] normalize time

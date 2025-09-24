@@ -12,7 +12,9 @@ import pandas as pd
 from ..log_utils import (
     print_drop_column_log,
     print_text_green,
-    print_text_yellow
+    print_text_yellow,
+    print_normalize_df_space_log,
+    print_normalize_df_string_log
 )
 
 
@@ -24,6 +26,7 @@ class DfUtils:
         null_values: list[str] = [],
         to_case: None|Literal['lower', 'upper']=None,
         to_ASCII: bool=False,
+        bool_number: bool=False,
         create_category: bool=False,
         drop_columns: list[str]=[],
         inplace: None|bool=False,
@@ -101,17 +104,28 @@ class DfUtils:
                 to_case=to_case,
                 to_ASCII=to_ASCII,
                 inplace=True,
-                show_log=show_log
+                show_log=False
             )
-
+   
             NullUtils.normalize(
                 dataframe=dataframe,
                 column_name=column_name,
                 null_values=null_values,
                 inplace=True,
-                show_log=show_log,
+                show_log=False,
                 chunk_size=chunk_size
             )
+        print_normalize_df_space_log(
+            show_log=show_log
+        )
+        print_normalize_df_string_log(
+            to_case=to_case,
+            to_ASCII=to_ASCII,
+            show_log=show_log
+        )
+
+
+        for column_name in column_names:
 
             NumericUtils.normalize(
                 dataframe=dataframe,
@@ -123,6 +137,7 @@ class DfUtils:
 
             BooleanUtils.normalize(
                 dataframe=dataframe,
+                bool_number=bool_number,
                 column_name=column_name,
                 match_min_rate=match_min_rate,
                 inplace=True,
@@ -147,13 +162,14 @@ class DfUtils:
             )
 
             if create_category:
-                StringUtils.to_category(
-                    dataframe=dataframe,
-                    column_name=column_name,
-                    inplace=True,
-                    chunk_size=chunk_size,
-                    show_log=show_log
-                )
+                if create_category:
+                    StringUtils.to_category(
+                        dataframe=dataframe,
+                        column_name=column_name,
+                        inplace=True,
+                        chunk_size=chunk_size,
+                        show_log=show_log
+                    )
 
         if not inplace:
             return dataframe
