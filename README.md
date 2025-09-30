@@ -60,88 +60,88 @@
 - ✅ <span style="color:green; font-weight:bold">100%</span> in String Normalization.
 
 
-## Requirements to Contribute
+## Table of Contents
+- [Requirements](#requirements)
+- [Key Features](#key-features)
+- [Usage](#usage)
+  - [DataFrame Normalization](#dataframe-normalization)
+  - [Numeric Normalization](#numeric-normalization)
+  - [Date and Time Normalization](#date-and-time-normalization)
+  - [Null Normalization](#null-normalization)
+  - [String Normalization](#string-normalization)
+  - [Time Normalization](#time-normalization)
+  - [Boolean Normalization](#boolean-normalization)
+  - [Automatic CSV Reading](#automatic-csv-reading)
+- [Full Example](#full-example)
+- [Contribution Guidelines](#contribution-guidelines)
 
-To contribute to this project, please ensure the following:
+---
 
-1. **Typing**  
-   All variables, attributes, and functions **must be typed**.
+## Usage
 
-2. **Automated Tests**  
-   All contributions **must include automated tests** using `pytest`.
-
-3. **Project Standards**  
-   All code **must follow the project coding standards**.
-
-4. **Imports Order**  
-   All imports **must be declared in alphabetical order**.
-
-
-## Quick Introduction
-
+### DataFrame Normalization
 ```python
 from jiboia_gpu import jiboia_gpu as jb
 
-# =========================
-# DataFrame-related functions
-# =========================
-# jb.df -> DataFrame-related functions:
-#   - Delete columns
-#   - Normalize the entire DataFrame
-#   - Show RAM and VRAM memory usage
-# Examples:
 jb.df.normalize(df)          # Normalize the entire DataFrame
-jb.df.cudf_size_info(df)     # Show VRAM usage of the DataFrame
+jb.df.cudf_size_info(df)     # Show RAM and VRAM memory usage
+```
 
-# =========================
-# Number-related functions
-# =========================
-# jb.num -> Number-related functions
-# Example:
-jb.num.normalize(df, column_name)       # Normalize numeric columns
+### Numeric Normalization
+```python
+jb.num.normalize(df, column_name)  # Normalize numeric columns
+```
 
-# =========================
-# Date/Time normalization
-# =========================
-jb.datetime.normalize(df, column_name)  # Convert strings to datetime
+### Date and Time Normalization
+```python
+jb.dt.normalize(df, column_name)   # Convert strings to datetime
+jb.time.normalize(df, column_name) # Convert strings to timedelta
+```
 
-# =========================
-# Null normalization
-# =========================
-jb.null.normalize(df, column_name)      # Standardize null values to cudf.NA
+### Null Normalization
+```python
+jb.null.normalize(df, column_name) # Convert null values to cudf.NA
+```
 
-# =========================
-# String normalization
-# =========================
-jb.str.normalize(df, column_name)       # Normalize strings: trim, remove extra spaces, detect data pollution, creates the categorical type if there are 50% or more of the same values
+### String Normalization
+```python
+jb.str.normalize(df, column_name)  # Remove extra spaces and create categories when appropriate
+```
 
-# =========================
-# Time normalization
-# =========================
-jb.time.normalize(df, column_name)      # Convert time strings to timedelta
+### Time Normalization
+```python
+jb.time.normalize(df, column_name) # Convert time strings to timedelta
+```
 
-# =========================
-# Boolean normalization
-# =========================
-jb.bool.normalize(df, column_name)      # Convert columns to boolean values
+### Boolean Normalization
+```python
+jb.bool.normalize(df, column_name) # Convert values to boolean
+```
 
-# =========================
-# CSV reading
-# =========================
+### Automatic CSV Reading
+```python
 jb.csv.read_files(
     folder_path="my_folder/",
     start_part=1,
     end_part=10
 )  # Read multiple CSV files automatically
-
+```
 
 ---
 
-## Example of use
+## Full Example
+> Below is a detailed example of creating a DataFrame with messy data and performing full normalization.
+
+```python
+import jiboia_gpu as jb
+import cudf
 
 ```python
 from jiboia-gpu import jiboia_gpu as jb
 
+# ---- Creating a DataFrame with Mixed Dirty Data --- #
+
+# Strings with multiple spaces, at the beginning and end
 col_str = "col_str"
 col_str_val = [
     "Surucuçu",
@@ -161,6 +161,7 @@ col_str_val = [
     "Sea Snake ",
 ]
 
+# Numbers in string with varied shapes
 col_number_str = "col_number_str"
 col_number_str_val = [
     "1",
@@ -180,6 +181,7 @@ col_number_str_val = [
     ".3e-2",
 ]
 
+# Integers in string with varied shapes
 col_number_false_float_str = "col_number_false_float_str"
 col_number_false_float_str_val = [
     "10",
@@ -199,6 +201,7 @@ col_number_false_float_str_val = [
     "1"
 ]
 
+# Boolean data in string of varying form
 col_bool = "col_bool"
 col_bool_val = [
     'YES',
@@ -218,6 +221,7 @@ col_bool_val = [
     'on'
 ]
 
+# Date data in string and in various formats
 col_date = "col_date"
 col_date_val = [
     '15.06.2018',
@@ -237,7 +241,7 @@ col_date_val = [
     None
 ]
 
-
+# Datetime in string
 col_datetime = "col_datetime"
 col_datetime_val = [
     "2025-01-01 01:10:10",
@@ -257,6 +261,7 @@ col_datetime_val = [
     "2039-03-15 15:30:30", 
 ]
 
+# Time data in string and various forms
 col_time = "col_time"
 col_time_val = [
     "0000UTC",
@@ -276,6 +281,7 @@ col_time_val = [
     None
 ]
 
+# Strings that can be reduced into categories
 col_cat = "col_cat"
 col_cat_val = [
     "constrictor snake",
@@ -295,6 +301,7 @@ col_cat_val = [
     "poisonous snake",
 ]
 
+# Normalizing the dataframe
 df: cudf.DataFrame = cudf.DataFrame({
     col_str: col_str_val,
     col_number_str: col_number_str_val,
@@ -332,3 +339,12 @@ col_time                      timedelta64[ns]
 col_cat                              category
 dtype: object
 ```
+
+---
+
+## Contribution Guidelines
+
+1. **Typing** is mandatory for all variables, attributes, and functions.  
+2. **Automated tests** with `pytest` are required for all contributions.  
+3. **Project standards** must be followed.  
+4. **Imports must be declared in alphabetical order**.

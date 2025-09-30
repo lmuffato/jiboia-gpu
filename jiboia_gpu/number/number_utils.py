@@ -1,6 +1,10 @@
-from ..log_utils import print_log
+from ..utils.log_utils import print_log
 from ..string.string_utils import StringUtils
-from ..utils import combine_regex, is_valid_to_normalize, CudfSupportedDtypes
+from ..utils.str_utils import combine_regex
+from ..utils.validation_utils import (
+    CudfSupportedDtypes,
+    is_valid_to_normalize
+)
 from .regex_pattern import (
     regex_pattern_bad_formatted_number,
     regex_pattern_valid_number,
@@ -11,13 +15,15 @@ import cupy as cp
 import warnings
 
 
-class NumericUtils:
+# TODO: implement normalization in chunks
+class NumberUtils:
     @staticmethod
     def normalize(
         dataframe: cudf.DataFrame,
         column_name: str,
         match_min_rate: None|int=50,
         inplace: None|bool=False,
+        chunk_size: int = 500000,
         show_log: None|bool=True
     ) -> bool|cudf.DataFrame:
         """
@@ -51,12 +57,15 @@ class NumericUtils:
         
         original_dtype: cp.dtypes = dataframe[column_name].dtype
         
-        is_number_in_str: bool = NumericUtils.is_number_in_str(
+        is_number_in_str: bool = NumberUtils.is_number_in_str(
             series=dataframe[column_name],
             match_min_rate=match_min_rate
         )
 
-        is_number: bool = is_number_in_str or (str(original_dtype) in  CudfSupportedDtypes.numeric_types)
+        is_number: bool = (
+            is_number_in_str
+            or (str(original_dtype) in  CudfSupportedDtypes.numeric_types)
+        )
 
         if not is_number:
             return False
@@ -67,7 +76,7 @@ class NumericUtils:
         original_dtype: cp.dtypes = dataframe[column_name].dtype
 
         if original_dtype in CudfSupportedDtypes.str_types:
-            NumericUtils.fix_decimal(
+            NumberUtils.fix_decimal(
                 dataframe=dataframe,
                 column_name=column_name,
                 inplace=True

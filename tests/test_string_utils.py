@@ -1,5 +1,4 @@
 import cudf
-import pytest
 from jiboia_gpu.string.string_utils import StringUtils
 
 

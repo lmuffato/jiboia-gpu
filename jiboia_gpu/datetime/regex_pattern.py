@@ -109,7 +109,7 @@ regex_pattern_datetime_all: list[dict[str, str]] = [
     }
 ]
 
-# Not implemented yet
+# TODO: implement normalization with months in text
 regex_pattern_month_name: list[dict[str, str]] = [
     # Mês abreviado, formato DD-MMM-YYYY
     {

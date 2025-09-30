@@ -2,16 +2,18 @@ import cudf
 from .regex_pattern import (
     regex_pattern_time_utc,
     regex_pattern_time_amp_pm,
-    regex_pattern_time_hh,
     regex_pattern_time_hh_mm,
     regex_pattern_time_hh_mm_ss,
     regex_pattern_time_hh_mm_ss_n,
     regex_pattern_timedelta
 )
-from ..log_utils import print_log
+from ..utils.log_utils import print_log
 from ..string.string_utils import StringUtils
-from ..utils import is_valid_to_normalize, combine_regex, CudfSupportedDtypes
-from ..chunk_utils import chunk_df
+from ..utils.str_utils import combine_regex
+from ..utils.validation_utils import (
+    CudfSupportedDtypes,
+    is_valid_to_normalize
+)
 import cudf
 
 

@@ -4,10 +4,14 @@ from .regex_pattern import (
     regex_pattern_boolean_raw,
     regex_pattern_boolean_numeric_raw
 )
-from ..chunk_utils import chunk_iterate
-from ..log_utils import print_log
+from ..utils.chunk_utils import chunk_iterate
+from ..utils.log_utils import print_log
 from ..string.string_utils import StringUtils
-from ..utils import is_valid_to_normalize, combine_regex, CudfSupportedDtypes
+from ..utils.str_utils import combine_regex
+from ..utils.validation_utils import (
+    CudfSupportedDtypes,
+    is_valid_to_normalize
+)
 
 
 class BooleanUtils:

@@ -1,7 +1,7 @@
 
 from ..boolean.boolean_utils import BooleanUtils
 from ..null.null_utils import NullUtils
-from ..numeric.numeric_utils import NumericUtils
+from ..number.number_utils import NumberUtils
 from ..string.string_utils import StringUtils
 from ..time.time_utils import TimeUtils
 from ..datetime.datetime_utils import DateTimeUtils
@@ -9,7 +9,7 @@ from typing import Literal
 import cudf
 import cupy as cp
 import pandas as pd
-from ..log_utils import (
+from ..utils.log_utils import (
     print_drop_column_log,
     print_text_green,
     print_text_yellow,
@@ -41,7 +41,7 @@ class DfUtils:
         Operações aplicadas por coluna, nesta ordem:
         1. StringUtils.normalize -> normalização de espaços múltiplos e strings (case e ASCII).
         2. NullUtils.normalize -> padronização e substituição de valores nulos.
-        3. NumericUtils.normalize -> conversão de strings numéricas para menor tipo numérico possível.
+        3. NumberUtils.normalize -> conversão de strings numéricas para menor tipo numérico possível.
         4. BooleanUtils.normalize -> conversão de strings booleanas para tipo boolean.
         5. TimeUtils.normalize -> normalização e parsing de valores de tempo (HH:MM:SS).
         6. DateTimeUtils.normalize -> normalização e parsing de valores datetime.
@@ -127,11 +127,12 @@ class DfUtils:
 
         for column_name in column_names:
 
-            NumericUtils.normalize(
+            NumberUtils.normalize(
                 dataframe=dataframe,
                 column_name=column_name,
                 match_min_rate=match_min_rate,
                 inplace=True,
+                chunk_size=chunk_size,
                 show_log=show_log
             )
 
@@ -285,3 +286,23 @@ class DfUtils:
             )
                 
         return df_info
+
+
+    @staticmethod
+    def frequency(dataframe, column_name) -> cudf.DataFrame:
+        """
+        Retorna um dataframe com a frequência de cada velor único em uma coluna.
+
+        Args:
+            dataframe (pd.DataFrame): O DataFrame de entrada.
+            coluna (str): O nome da coluna para calcular a frequência.
+
+        Returns:
+            pd.DataFrame: Um DataFrame com a frequência de cada valor na coluna
+                        em ordem do maior para o menor.
+        """
+        frequencia = dataframe[column_name].value_counts()
+
+        df_frequencia = frequencia.reset_index()
+
+        df_frequencia.columns = [column_name, 'frequency']

@@ -1,10 +1,32 @@
-from ..boolean.regex_pattern import regex_pattern_boolean_raw, regex_pattern_boolean_numeric_raw
-from ..chunk_utils import chunk_iterate
-from ..datetime.regex_pattern import regex_pattern_date, regex_pattern_datetime_all
-from ..log_utils import print_normalize_space_log, print_normalize_string_log, print_to_category_log
-from ..numeric.regex_pattern import regex_pattern_bad_formatted_number, regex_pattern_valid_number
-from ..time.regex_pattern import regex_pattern_time_utc, regex_pattern_time_hh_mm, regex_pattern_time_hh_mm_ss, regex_pattern_time_hh_mm_ss_n
-from ..utils import is_valid_to_normalize, combine_regex, CudfSupportedDtypes
+from ..boolean.regex_pattern import (
+    regex_pattern_boolean_raw,
+    regex_pattern_boolean_numeric_raw
+)
+from ..utils.chunk_utils import chunk_iterate
+from ..datetime.regex_pattern import (
+    regex_pattern_date,
+    regex_pattern_datetime_all
+)
+from ..utils.log_utils import (
+    print_normalize_space_log,
+    print_normalize_string_log,
+    print_to_category_log
+)
+from ..number.regex_pattern import (
+    regex_pattern_bad_formatted_number,
+    regex_pattern_valid_number
+)
+from ..time.regex_pattern import (
+    regex_pattern_time_utc,
+    regex_pattern_time_hh_mm,
+    regex_pattern_time_hh_mm_ss,
+    regex_pattern_time_hh_mm_ss_n
+)
+from ..utils.str_utils import combine_regex
+from ..utils.validation_utils import (
+    CudfSupportedDtypes,
+    is_valid_to_normalize
+)
 from typing import Literal
 import cudf
 
@@ -529,7 +551,6 @@ class StringUtils:
         """
         Retorna o número de ocorrências para uma lista de padrões.
         """
-        # Inicializa a frequência de todos os padrões como zero
         for pattern in regex_patterns:
             pattern["frequency"] = 0
 
@@ -540,3 +561,35 @@ class StringUtils:
                 pattern["frequency"] += chunk.str.match(pattern["regex"]).sum()
                 
         return regex_patterns
+
+
+    @staticmethod
+    def sanitize_unique(
+        dataframe: cudf.DataFrame,
+        column_name: str,
+        sanitize_values: dict[str, list[str]] = [],
+        null_values: list[str] = [],
+        inplace: bool=True
+    ) -> None:
+        
+        is_valid: bool = is_valid_to_normalize(
+            series=dataframe[column_name],
+            valid_types=CudfSupportedDtypes.str_types,
+        )
+
+        if not is_valid:
+            return False
+
+        if not inplace:
+            dataframe: cudf.DataFrame = dataframe.copy()
+
+        if len(null_values) > 0:
+            dataframe[column_name] = dataframe[column_name].replace(null_values, None)
+        
+        if len(sanitize_values) > 0:
+            for target_value, values_to_replace in sanitize_values.items():
+                dataframe[column_name] = dataframe[column_name].replace(values_to_replace, target_value)
+
+        if not inplace:
+            return dataframe
+        return True

@@ -1,8 +1,7 @@
+from typing import Callable, Generator
 import cudf
 import cupy as cp
 import functools
-import pandas as pd
-from typing import Callable, Generator
 
 
 def combine_regex(regex_patterns: list[dict[str, str]]) -> str:

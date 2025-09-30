@@ -2,7 +2,7 @@ import cudf
 import cupy as cp
 import cupy.typing as npt
 import string
-from jiboia_gpu.numeric.numeric_utils import NumericUtils
+from jiboia_gpu.number.number_utils import NumberUtils
 
 
 DF_SIZE: int = 10
@@ -111,7 +111,7 @@ def test_normalize_downcast_int64_to_int8() -> None:
 
     df[COLUMN_NAME] = df[COLUMN_NAME].astype(str)
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -130,7 +130,7 @@ def test_normalize_downcast_int64_to_int16() -> None:
 
     df[COLUMN_NAME] = df[COLUMN_NAME].astype(str)
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -149,7 +149,7 @@ def test_normalize_downcast_int64_to_int32() -> None:
 
     df[column_name] = df[column_name].astype(str)
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=column_name,
         inplace=True,
@@ -162,7 +162,7 @@ def test_normalize_downcast_int64_to_int32() -> None:
 def test_normalize_downcast_false_float64_to_int8() -> None:
     df: cudf.DataFrame = generate_df_int_numbers(dtype=cp.float64, df_size=DF_SIZE, column_name=COLUMN_NAME)
  
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -173,7 +173,7 @@ def test_normalize_downcast_false_float64_to_int8() -> None:
 
     df[COLUMN_NAME] = df[COLUMN_NAME].astype(str)
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -190,7 +190,7 @@ def test_normalize_downcast_float64_to_float32() -> None:
 
     df[COLUMN_NAME] = df[COLUMN_NAME] + decimal_values
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -201,7 +201,7 @@ def test_normalize_downcast_float64_to_float32() -> None:
 
     df[COLUMN_NAME] = df[COLUMN_NAME].astype(str)
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -214,7 +214,7 @@ def test_normalize_downcast_float64_to_float32() -> None:
 def test_normalize_convert_scientific_float_to_int32() -> None:
     df: cudf.DataFrame = generate_df_scientific_numbers(df_size=DF_SIZE, column_name=COLUMN_NAME)
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -233,7 +233,7 @@ def test_normalize_convert_mixed_numeric_to_int32() -> None:
 
     not_null_before: int = df[COLUMN_NAME].notna().sum()
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -255,7 +255,7 @@ def test_normalize_convert_mixed_numeric_to_float32() -> None:
 
     not_null_before: int = df[COLUMN_NAME].notna().sum()
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -287,7 +287,7 @@ def test_normalize_convert_bad_formatted_number_to_float32() -> None:
 
     not_null_before: int = df[COLUMN_NAME].notna().sum()
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -334,7 +334,7 @@ def test_normalize_convert_mixed_and_null_numeric_to_float64() -> None:
 
     not_null_before: int = df[COLUMN_NAME].notna().sum()
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         inplace=True,
@@ -363,7 +363,7 @@ def test_normalize_convert_mixed_with_letters_to_float32() -> None:
 
     not_numbers: int = df_letters.size
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         match_min_rate=50,       # Pelo menos, 50% das linhas precisa ser um número válido
@@ -387,7 +387,7 @@ def test_normalize_do_not_convert_when_string_mix_is_greater_than_numeric_thresh
 
     not_null_before: int = df[COLUMN_NAME].notna().sum()
 
-    NumericUtils.normalize(
+    NumberUtils.normalize(
         dataframe=df,
         column_name=COLUMN_NAME,
         match_min_rate=90,       # Pelo menos, 90% das linhas precisa ser um número válido

@@ -1,9 +1,10 @@
-import cudf
 from .regex_pattern import RAW_INVALID_LOWERCASE_VALUES
-from ..chunk_utils import chunk_iterate
-from ..log_utils import print_normalize_type_log
-from ..string.string_utils import StringUtils
-from ..utils import is_valid_to_normalize, combine_regex, CudfSupportedDtypes
+from ..utils.log_utils import print_normalize_type_log
+from ..utils.validation_utils import (
+    CudfSupportedDtypes,
+    is_valid_to_normalize
+)
+import cudf
 
 
 class NullUtils:
@@ -33,19 +34,6 @@ class NullUtils:
 
         if not inplace:
             dataframe = dataframe.copy()
-
-        # total_rows: int = len(dataframe)
-
-        # for start_index in range(0, total_rows, chunk_size):
-        #     end_index: int = min(start_index + chunk_size, total_rows)
-            
-        #     chunk: cudf.Series = dataframe[column_name].iloc[start_index:end_index]
-
-        #     mask: cudf.Series = chunk.str.lower().isin(all_null_values)
-
-        #     chunk.loc[mask] = None
-
-        #     dataframe.iloc[start_index:end_index, dataframe.columns.get_loc(column_name)] = chunk
 
         total_rows: int = len(dataframe)
         column_index: int = dataframe.columns.get_loc(column_name)
