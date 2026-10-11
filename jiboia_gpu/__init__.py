@@ -21,9 +21,9 @@ class JiboiaGPUConfig:
         self.show_log: bool = True
         self.chunk_size: int = 500_000
         self.match_min_rate: int = 0
-        self.null_values: list[str] = [],
-        self.to_case: None|Literal['lower', 'upper']=None,
-        self.to_ASCII: bool=False,
+        self.null_values: list[str] = []
+        self.to_case: None|Literal['lower', 'upper']=None
+        self.to_ASCII: bool=False
         self.bool_number: bool=False
         self.create_category: bool=True
 
