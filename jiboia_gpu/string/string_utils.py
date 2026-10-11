@@ -106,7 +106,11 @@ class StringUtils:
             series_chunk = dataframe.iloc[start_index:end_index, column_index]
 
             # normaliza espaços e remove espaços extras no início/fim
-            series_chunk = series_chunk.str.normalize_spaces().str.strip()
+            series_chunk = (
+                series_chunk
+                .str.replace(r"\s+", " ", regex=True)
+                .str.strip()
+            )
 
             dataframe.iloc[start_index:end_index, column_index] = series_chunk
 

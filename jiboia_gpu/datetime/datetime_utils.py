@@ -221,8 +221,25 @@ class DateTimeUtils:
 
                 dataframe.iloc[start_index:end_index, column_index] = series_chunk
 
-            dataframe[column_name] = cudf.to_datetime(dataframe[column_name])
-            dataframe[column_name] = dataframe[column_name].astype("datetime64[ns]")
+
+            series: cudf.Series = dataframe[column_name]
+            null_mask: cudf.Series = series.isna()
+
+            if null_mask.all():
+                dataframe[column_name] = cudf.Series(
+                    None,
+                    index=series.index,
+                    dtype="datetime64[ns]",
+                )
+            else:
+                first_valid_value = series.dropna().iloc[0]
+
+                converted: cudf.Series = cudf.to_datetime(
+                    series.fillna(first_valid_value)
+                ).astype("datetime64[ns]")
+
+                converted[null_mask] = None
+                dataframe[column_name] = converted
 
             del total_rows
             del column_index
