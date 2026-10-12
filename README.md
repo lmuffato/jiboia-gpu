@@ -1,8 +1,10 @@
 # jiboia-gpu
 
-<img src="jiboia_icon.svg" width="120" alt="Jiboia Icon"/>
+<img src="jiboia_gpu_icon.svg" width="120" alt="Jiboia Icon"/>
 
 **jiboia-gpu** is a Python library designed to **normalize data and optimize data types** of a DataFrame efficiently using **NVIDIA GPUs** through the **RAPIDS** ecosystem.
+
+Automated processing and normalization of DataFrames containing inconsistent or heterogeneous data. It automatically identifies data types and formats within each column, standardizes values, and converts columns to the most suitable types, prioritizing data compatibility and memory efficiency. This process reduces memory usage and optimizes data storage and processing, particularly for large datasets.
 
 ## Requirements
 
@@ -12,6 +14,7 @@
 
 ![Python](https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Nvidia](https://img.shields.io/badge/nvidia-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
+![Pandas](https://img.shields.io/badge/pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![Pytest](https://img.shields.io/badge/pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
 ![Spyder](https://img.shields.io/badge/spyder-8C0000?style=for-the-badge&logo=spyderide&logoColor=white)
  ![GoogleColab](https://img.shields.io/badge/googlecolab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white)
@@ -81,7 +84,8 @@
 
 ### DataFrame Normalization
 ```python
-from jiboia_gpu import jiboia_gpu as jb
+import cudf
+import jiboia_gpu as jb
 
 jb.df.normalize(df)          # Normalize the entire DataFrame
 jb.df.cudf_size_info(df)     # Show RAM and VRAM memory usage
@@ -313,31 +317,57 @@ df: cudf.DataFrame = cudf.DataFrame({
     col_cat: col_cat_val
 })
 
-Done! all values null in column col_time converted to <NA>
-Done! all duplicate and edge spaces have been removed in column col_cat
-Done! all values null in column col_cat converted to <NA>
-Done! column col_str converted to object
-Done! column col_number_str converted to float64
-Done! column col_number_false_float_str converted to int16
-Done! column col_bool converted to bool
-Done! column col_date converted to object
-Done! column col_date converted to datetime64[s]
-Done! column col_datetime converted to object
-Done! column col_time converted to timedelta64[ns]
-Done! column col_cat converted to object
-Done! the column col_cat was converted to a category
+df_normalized = jb.df.normalize(
+    dataframe=df,
+    null_values=["invalid"],
+    to_case='lower',
+    to_ASCII=True,
+    match_min_rate=25,
+    inplace=False,
+    create_category=True,
+    show_log=True,
+    chunk_size=1_000_000
+)
 
-print(df_normalized.dtypes)
-# results:
+
+# You will see a log like this.
+# Done! all values null in column col_time converted to <NA>
+# Done! all duplicate and edge spaces have been removed in column col_cat
+# Done! all values null in column col_cat converted to <NA>
+# Done! column col_str converted to object
+# Done! column col_number_str converted to float64
+# Done! column col_number_false_float_str converted to int16
+# Done! column col_bool converted to bool
+# Done! column col_date converted to object
+# Done! column col_date converted to datetime64[s]
+# Done! column col_datetime converted to object
+# Done! column col_time converted to timedelta64[ns]
+# Done! column col_cat converted to object
+# Done! the column col_cat was converted to a category
+
+# Before types:
+col_str                       object
+col_number_str                object
+col_number_false_float_str    object
+col_bool                      object
+col_date                      object
+col_datetime                  object
+col_time                      object
+col_cat                       object
+dtype: object
+
+
+# After normalizing
 col_str                                object
 col_number_str                        float64
-col_number_false_float_str              int16
-col_bool                                 bool
+col_number_false_float_str              Int16
+col_bool                              boolean
 col_date                        datetime64[s]
 col_datetime                   datetime64[ns]
 col_time                      timedelta64[ns]
 col_cat                              category
 dtype: object
+
 ```
 
 ---
